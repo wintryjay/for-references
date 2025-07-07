@@ -207,55 +207,56 @@
     }
     .org-node-btns {
       display: inline-flex;
-      gap: 4px;
+      gap: 8px;
+      margin-left: 12px;
     }
     .org-node-btns button {
-      background: #ffffff; 
-      border: 1px solid #e2e8f0; 
-      color: #718096; 
-      border-radius: 6px; 
-      font-size: 12px;
-      padding: 6px 10px; 
+      background: none; 
+      border: none; 
+      color: #4299e1; 
+      font-size: 13px;
+      padding: 0; 
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 2px;
     }
     .org-node-btns button:hover { 
-      background: #4299e1; 
-      color: #ffffff;
-      border-color: #4299e1;
+      color: #3182ce;
+      text-decoration: none;
     }
     .org-children { 
       margin-left: 24px; 
       margin-top: 8px;
     }
     .toggle-org-panel {
-      position: absolute; 
-      left: -36px; 
-      top: 50px; 
-      width: 32px; 
+      position: fixed; 
+      right: 20px; 
+      top: 50%; 
+      transform: translateY(-50%);
+      width: 48px; 
       height: 48px; 
-      border-radius: 8px 0 0 8px;
+      border-radius: 50%;
       background: #4299e1; 
       color: #fff; 
       border: none; 
-      font-size: 18px; 
+      font-size: 20px; 
       font-weight: 700; 
       cursor: pointer;
-      display: flex; 
+      display: none;
       align-items: center; 
       justify-content: center;
-      z-index: 3; 
-      box-shadow: -2px 2px 10px rgba(0,0,0,0.1);
+      z-index: 1000; 
+      box-shadow: 0 4px 20px rgba(66, 153, 225, 0.4);
       transition: all 0.3s ease;
     }
-    .toggle-org-panel.closed { 
-      left: 0; 
-      background: #718096;
-      border-radius: 0 8px 8px 0;
+    .toggle-org-panel.show { 
+      display: flex;
     }
     .toggle-org-panel:hover {
       background: #3182ce;
+      transform: translateY(-50%) scale(1.1);
     }
     .toolbar-area {
       display: flex; 
@@ -594,12 +595,15 @@
           <div class="org-tree-panel" id="orgTreePanel">
             <div class="org-tree-header">
               <span class="org-tree-title">조직/부서</span>
-              <button onclick="openOrgModal('add')">+ 추가</button>
+              <div style="display: flex; gap: 12px; align-items: center;">
+                <button onclick="openOrgModal('add')">+ 추가</button>
+                <button onclick="toggleOrgPanel()" style="background: #e2e8f0; color: #4a5568; padding: 6px 8px; font-size: 12px;">✕</button>
+              </div>
             </div>
             <div class="org-tree-content">
               <ul class="org-tree-ul" id="orgTree"></ul>
             </div>
-            <button class="toggle-org-panel" id="toggleOrgPanel" title="조직 패널 닫기" onclick="toggleOrgPanel()">→</button>
+            <button class="toggle-org-panel" id="toggleOrgPanel" title="조직 패널 열기" onclick="toggleOrgPanel()">📁</button>
           </div>
         </div>
       </div>
@@ -693,11 +697,11 @@
       let btn = document.getElementById('toggleOrgPanel');
       if(orgPanelOpened) {
         orgPanel.classList.remove('closed');
-        btn.innerText = "→";
+        btn.classList.remove('show');
         btn.title = "조직 패널 닫기";
       } else {
         orgPanel.classList.add('closed');
-        btn.innerText = "←";
+        btn.classList.add('show');
         btn.title = "조직 패널 열기";
       }
     }
