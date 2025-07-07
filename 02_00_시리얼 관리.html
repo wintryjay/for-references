@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>시리얼(라이선스) 관리 - 큐빅 관리자</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0; 
+      font-family: 'Noto Sans KR', sans-serif; 
+      background: #f5f7fa;
+      color: #2c3e50;
+      line-height: 1.6;
+    }
+    .container { 
+      display: flex; 
+      height: 100vh; 
+    }
+    .sidebar {
+      width: 280px; 
+      background: #4299e1;
+      display: flex; 
+      flex-direction: column; 
+      align-items: flex-start; 
+      padding: 32px 0 0 0;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+    }
+    .sidebar .logo { 
+      font-weight: 700; 
+      font-size: 22px; 
+      margin-left: 32px; 
+      margin-bottom: 48px;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .sidebar nav { 
+      width: 100%; 
+    }
+    .sidebar nav a {
+      display: block; 
+      padding: 16px 32px; 
+      color: rgba(255,255,255,0.9); 
+      text-decoration: none;
+      font-size: 16px; 
+      font-weight: 500;
+      border-left: 4px solid transparent; 
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .sidebar nav a:hover,
+    .sidebar nav a.active { 
+      background: rgba(255,255,255,0.15);
+      border-left: 4px solid #ffffff; 
+      color: #ffffff;
+    }
+    .main {
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      min-width: 0;
+      background: #ffffff;
+    }
+    .topbar {
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      background: #ffffff;
+      padding: 0 40px; 
+      height: 80px; 
+      border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .topbar-title { 
+      font-size: 28px; 
+      font-weight: 700;
+      color: #4299e1;
+    }
+    .topbar-btn {
+      background: #4299e1;
+      color: #fff; 
+      border: none; 
+      font-size: 16px; 
+      padding: 14px 28px;
+      border-radius: 12px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+    }
+    .topbar-btn:hover { 
+      background: #3182ce;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4);
+    }
+    /* 위젯 */
+    .widgets-row {
+      display: flex; 
+      gap: 24px; 
+      padding: 32px 40px 0 40px;
+      background: transparent;
+    }
+    .widget {
+      flex: 1;
+      background: #ffffff;
+      border-radius: 16px; 
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      padding: 28px 24px; 
+      min-width: 0; 
+      max-width: 100%;
+      display: flex; 
+      flex-direction: column; 
+      align-items: center;
+      cursor: pointer; 
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+      position: relative;
+    }
+    .widget::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: #4299e1;
+      border-radius: 16px 16px 0 0;
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+    .widget:hover::before,
+    .widget.selected::before {
+      transform: scaleX(1);
+    }
+    .widget.selected {
+      border: 2px solid #4299e1; 
+      box-shadow: 0 8px 25px rgba(66, 153, 225, 0.2);
+      background: #ebf8ff;
+    }
+    .widget:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    }
+    .widget-title { 
+      font-size: 16px; 
+      color: #718096; 
+      margin-bottom: 8px; 
+      font-weight: 500;
+    }
+    .widget-value { 
+      font-size: 36px; 
+      font-weight: 700; 
+      margin-bottom: 4px; 
+      color: #4299e1;
+    }
+    .widget-desc { 
+      font-size: 14px; 
+      color: #4299e1;
+      font-weight: 500;
+    }
+    /* 검색/필터 바 */
+    .toolbar-area {
+      background: #ffffff;
+      padding: 20px 40px; 
+      border-bottom: 1px solid #e2e8f0;
+      display: flex; 
+      justify-content: flex-end; 
+      align-items: center; 
+      gap: 12px;
+    }
+    .toolbar-area select, .toolbar-area input[type="text"] {
+      padding: 12px 16px; 
+      border: 2px solid #e2e8f0; 
+      border-radius: 10px; 
+      font-size: 15px;
+      transition: all 0.3s ease;
+      background: #ffffff;
+      font-weight: 500;
+    }
+    .toolbar-area select:focus, .toolbar-area input[type="text"]:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+    .toolbar-area button { 
+      padding: 12px 20px; 
+      border-radius: 10px; 
+      border: 2px solid #4299e1; 
+      color: #4299e1; 
+      background: #ffffff; 
+      font-weight: 600; 
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .toolbar-area button:hover { 
+      background: #4299e1;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+    }
+    .serial-table-area {
+      flex: 1; 
+      background: transparent;
+      padding: 0 40px 40px; 
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: flex-start;
+    }
+    table {
+      width: 100%; 
+      border-collapse: collapse; 
+      background: #ffffff;
+      margin-top: 24px; 
+      font-size: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 18px 16px; 
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    th { 
+      background: #f8fafc;
+      color: #4a5568;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    tr:last-child td { 
+      border-bottom: none; 
+    }
+    tbody tr {
+      transition: all 0.2s ease;
+    }
+    tbody tr:hover {
+      background: #f7fafc;
+    }
+    .btn-action {
+      background: #4299e1;
+      color: #fff; 
+      border: none; 
+      border-radius: 8px; 
+      padding: 8px 16px;
+      margin-right: 6px; 
+      cursor: pointer; 
+      font-size: 14px; 
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(66, 153, 225, 0.3);
+    }
+    .btn-action:hover { 
+      background: #3182ce;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.4);
+    }
+    .btn-view, .btn-memo {
+      background: #ffffff; 
+      color: #4299e1; 
+      border: 2px solid #4299e1; 
+      padding: 6px 14px; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      transition: all 0.3s ease;
+      font-size: 14px;
+      margin-right: 4px;
+    }
+    .btn-view:hover, .btn-memo:hover { 
+      background: #4299e1;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+    }
+    .empty-state {
+      margin-top: 80px; 
+      color: #718096; 
+      text-align: center;
+    }
+    .empty-state p { 
+      margin-top: 16px; 
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .empty-state button {
+      margin-top: 24px; 
+      background: #4299e1;
+      color: #fff; 
+      border: none; 
+      border-radius: 12px;
+      padding: 14px 28px; 
+      font-size: 16px; 
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+    }
+    .empty-state button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4);
+    }
+    .table-footer {
+      display: flex; 
+      justify-content: flex-end; 
+      align-items: center;
+      width: 100%; 
+      background: none; 
+      margin-top: 16px;
+    }
+    .table-footer button {
+      background: #ffffff;
+      border: 2px solid #4299e1; 
+      color: #4299e1;
+      border-radius: 10px; 
+      padding: 12px 24px; 
+      font-size: 15px; 
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(66, 153, 225, 0.1);
+    }
+    .table-footer button:hover { 
+      background: #4299e1;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+    }
+    /* 모달 */
+    .modal-bg {
+      display: none; 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100vw; 
+      height: 100vh;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(5px);
+      z-index: 999;
+      align-items: center; 
+      justify-content: center;
+    }
+    .modal {
+      background: #ffffff;
+      padding: 40px 44px; 
+      border-radius: 20px; 
+      min-width: 380px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.2);
+    }
+    .modal input[type="text"], .modal input[type="date"], .modal textarea {
+      width: 90%; 
+      margin: 16px auto; 
+      padding: 14px 18px; 
+      font-size: 15px;
+      border-radius: 10px; 
+      border: 2px solid #e2e8f0;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      box-sizing: border-box;
+    }
+    .modal textarea { 
+      resize: vertical; 
+      min-height: 72px; 
+    }
+    .modal input[type="text"]:focus, .modal input[type="date"]:focus, .modal textarea:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+    .modal-btns { 
+      margin-top: 28px; 
+      display: flex; 
+      gap: 16px; 
+      justify-content: center; 
+    }
+    .modal-btns button { 
+      min-width: 100px;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .modal-btns .btn-action {
+      background: #4299e1;
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+    }
+    .modal-btns .btn-action:hover {
+      background: #3182ce;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4);
+    }
+    .modal-btns button:not(.btn-action) {
+      background: #ffffff;
+      color: #718096;
+      border: 2px solid #e2e8f0;
+    }
+    .modal-btns button:not(.btn-action):hover {
+      background: #f7fafc;
+      border-color: #cbd5e0;
+    }
+    .btn-delete {
+      background: #ffffff !important;
+      color: #e53e3e !important;
+      border: 2px solid #e53e3e !important;
+    }
+    .btn-delete:hover {
+      background: #e53e3e !important;
+      color: #ffffff !important;
+    }
+    @media (max-width: 900px) {
+      .widgets-row { 
+        flex-direction: column; 
+        gap: 16px; 
+      }
+      .widget { 
+        width: 100%; 
+        min-width: 0; 
+      }
+      .toolbar-area { 
+        flex-direction: column; 
+        align-items: flex-start; 
+        gap: 12px; 
+      }
+      .serial-table-area { 
+        padding: 0 20px 20px;
+      }
+      .sidebar {
+        width: 240px;
+      }
+    }
+    /* 상태 배지 스타일 */
+    .status-badge {
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      min-width: 70px;
+      display: inline-block;
+    }
+    .status-unassigned {
+      background: #fed7d7;
+      color: #c53030;
+    }
+    .status-inuse {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+    .status-revoked {
+      background: #feebc8;
+      color: #c05621;
+    }
+    .status-expired {
+      background: #e2e8f0;
+      color: #4a5568;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">주식회사 큐빅</div>
+      <nav>
+        <a href="#">대시보드</a>
+        <a href="#" class="active">시리얼 관리</a>
+        <a href="#">조직/사용자 관리</a>
+        <a href="#">문서함</a>
+        <a href="#">공지사항</a>
+      </nav>
+    </aside>
+
+    <!-- Main Area -->
+    <main class="main">
+      <!-- Topbar -->
+      <div class="topbar">
+        <span class="topbar-title">시리얼(라이선스) 관리</span>
+        <button class="topbar-btn" id="btnAddSerial">+ 시리얼 등록</button>
+      </div>
+
+      <!-- Status Widgets -->
+      <div class="widgets-row" id="widgetRow"></div>
+
+      <!-- 검색/필터 바 (우측정렬) -->
+      <div class="toolbar-area">
+        <select id="filterStatus">
+          <option value="">전체 상태</option>
+          <option value="미배분">미배분</option>
+          <option value="사용중">사용중</option>
+          <option value="회수">회수</option>
+          <option value="만료">만료</option>
+        </select>
+        <input type="text" id="searchSerial" placeholder="시리얼 번호/사용자명 검색">
+        <button onclick="filterSerials()">검색</button>
+      </div>
+
+      <!-- Serial Table Area -->
+      <div class="serial-table-area" id="serialTableArea"></div>
+
+      <!-- Modal (등록/배분/회수/상세/메모) -->
+      <div class="modal-bg" id="modalBg">
+        <div class="modal" id="modalContent"></div>
+      </div>
+    </main>
+  </div>
+  <script>
+    // 데모 데이터 (시리얼 리스트)
+    let serials = [
+      { id: 1, serial: "ABCD-1234-EFGH-5678", status: "미배분", user: "", pc: "", regDate: "2025-07-04", expDate: "2026-07-03", memo: "" },
+      { id: 2, serial: "JKLM-4321-IJKL-9876", status: "사용중", user: "홍길동", pc: "PC01", regDate: "2025-06-01", expDate: "2026-05-31", memo: "회사 지급PC에 세팅 완료" },
+      { id: 3, serial: "QWER-7890-ASDF-1357", status: "회수", user: "김철수", pc: "PC13", regDate: "2024-12-10", expDate: "2025-12-09", memo: "" },
+      { id: 4, serial: "ZZZZ-1111-YYYY-2222", status: "만료", user: "이영희", pc: "PC22", regDate: "2023-07-10", expDate: "2024-07-09", memo: "만료됨, 재발급 필요" }
+    ];
+    let modalBg = document.getElementById('modalBg');
+    let modalContent = document.getElementById('modalContent');
+    let widgetFilter = "";
+
+    function getStatusBadge(status) {
+      const statusClasses = {
+        "미배분": "status-unassigned",
+        "사용중": "status-inuse", 
+        "회수": "status-revoked",
+        "만료": "status-expired"
+      };
+      return `<span class="status-badge ${statusClasses[status]}">${status}</span>`;
+    }
+
+    function renderWidgets() {
+      let total = serials.length;
+      let used = serials.filter(s => s.status === "사용중").length;
+      let available = serials.filter(s => s.status === "미배분").length;
+      let problem = serials.filter(s => s.status === "회수" || s.status === "만료").length;
+      let widgets = [
+        { title: "전체 시리얼", value: total, desc: "전체 부여된 시리얼", filter: "" },
+        { title: "사용 중", value: used, desc: "현재 사용 중인 시리얼", filter: "사용중" },
+        { title: "사용 가능", value: available, desc: "미배분(남은) 시리얼", filter: "미배분" },
+        { title: "문제 있음", value: problem, desc: "회수/만료 등", filter: "problem" }
+      ];
+      let html = widgets.map(w =>
+        `<div class="widget${widgetFilter===w.filter ? " selected":""}" onclick="selectWidget('${w.filter}')">
+          <div class="widget-title">${w.title}</div>
+          <div class="widget-value">${w.value}</div>
+          <div class="widget-desc">${w.desc}</div>
+        </div>`
+      ).join('');
+      document.getElementById('widgetRow').innerHTML = html;
+    }
+    renderWidgets();
+
+    function selectWidget(filter) {
+      widgetFilter = filter;
+      document.getElementById('filterStatus').value = (filter==="problem")?"":filter;
+      renderWidgets();
+      renderTable();
+    }
+
+    function renderTable() {
+      let area = document.getElementById('serialTableArea');
+      let statusFilter = document.getElementById('filterStatus').value;
+      let search = document.getElementById('searchSerial').value.trim();
+      let rows = serials.filter(s => {
+        let ok = true;
+        if(widgetFilter==="problem") {
+          ok = (s.status==="회수" || s.status==="만료");
+        } else if(widgetFilter) {
+          ok = s.status === widgetFilter;
+        }
+        if(statusFilter) ok = ok && s.status === statusFilter;
+        if(search) {
+          ok = ok && (s.serial.includes(search) || s.user.includes(search));
+        }
+        return ok;
+      });
+      if(rows.length === 0) {
+        area.innerHTML = `
+          <div class="empty-state">
+            <img src="https://cdn-icons-png.flaticon.com/512/1046/1046872.png" width="72" alt="">
+            <p>등록된 시리얼이 없습니다.<br>오른쪽 상단의 [시리얼 등록] 버튼을 눌러 새 시리얼을 등록하세요.</p>
+          </div>
+        `;
+        return;
+      }
+      let html = `
+        <table>
+          <thead>
+            <tr>
+              <th>시리얼 번호</th>
+              <th>상태</th>
+              <th>배분 대상자</th>
+              <th>PC명</th>
+              <th>등록일</th>
+              <th>만료일</th>
+              <th>메모</th>
+              <th>상세</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(s => `
+              <tr>
+                <td style="font-family: monospace; font-weight: 600;">${s.serial}</td>
+                <td>${getStatusBadge(s.status)}</td>
+                <td>${s.user || "-"}</td>
+                <td>${s.pc || "-"}</td>
+                <td>${s.regDate}</td>
+                <td>${s.expDate}</td>
+                <td>
+                  ${s.memo && s.memo.trim() !== ""
+                    ? `<button class="btn-memo" onclick="openModal('memo', ${s.id})">보기</button>`
+                    : ""}
+                </td>
+                <td><button class="btn-view" onclick="openModal('detail', ${s.id})">보기</button></td>
+                <td>
+                  ${s.status === "미배분" ? `<button class="btn-action" onclick="openModal('assign', ${s.id})">배분</button>` : ""}
+                  ${s.status === "사용중" ? `<button class="btn-action" onclick="openModal('revoke', ${s.id})">회수</button>` : ""}
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+        <div class="table-footer">
+          <button onclick="exportExcel()">엑셀 내보내기</button>
+        </div>
+      `;
+      area.innerHTML = html;
+    }
+    renderTable();
+
+    document.getElementById('filterStatus').onchange = function() {
+      widgetFilter = this.value === "" ? "" : this.value;
+      renderWidgets(); renderTable();
+    };
+    document.getElementById('searchSerial').oninput = renderTable;
+    function filterSerials() { renderTable(); }
+
+    // Modal open/close
+    function openModal(type, id) {
+      let s = serials.find(x => x.id === id);
+      if(type === 'assign') {
+        modalContent.innerHTML = `
+          <div style="font-size:20px; font-weight:700; margin-bottom: 20px; color: #2d3748;">시리얼 배분</div>
+          <div style="margin:16px 0 20px; padding: 16px; background: #f7fafc; border-radius: 10px; border-left: 4px solid #4299e1;">시리얼 번호:<br><b style="font-family: monospace; color: #4299e1;">${s.serial}</b></div>
+          <input type="text" id="assignUser" placeholder="배분 대상자(이름)">
+          <input type="text" id="assignPC" placeholder="PC명">
+          <div class="modal-btns">
+            <button onclick="assignSerial(${s.id})" class="btn-action">배분</button>
+            <button onclick="closeModal()">취소</button>
+          </div>
+        `;
+      } else if(type === 'revoke') {
+        modalContent.innerHTML = `
+          <div style="font-size:20px; font-weight:700; margin-bottom: 20px; color: #2d3748;">시리얼 회수</div>
+          <div style="margin:16px 0 20px; padding: 16px; background: #fef5e7; border-radius: 10px; border-left: 4px solid #f6ad55;">정말 이 시리얼을 회수하시겠습니까?<br>
+          <b style="font-family: monospace; color: #4299e1;">${s.serial}</b> (${s.user} / ${s.pc})</div>
+          <div class="modal-btns">
+            <button onclick="revokeSerial(${s.id})" class="btn-action">회수</button>
+            <button onclick="closeModal()">취소</button>
+          </div>
+        `;
+      } else if(type === 'detail') {
+        modalContent.innerHTML = `
+          <div style="font-size:20px; font-weight:700; margin-bottom: 24px; color: #2d3748;">시리얼 상세정보</div>
+          <div style="text-align:left; margin:20px 0 24px; background: #f7fafc; padding: 20px; border-radius: 12px; line-height: 1.8;">
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">시리얼번호:</b> <span style="font-family: monospace; color: #4299e1; font-weight: 600;">${s.serial}</span></div>
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">상태:</b> ${getStatusBadge(s.status)}</div>
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">배분 대상자:</b> <span style="color: #2d3748; font-weight: 500;">${s.user || "-"}</span></div>
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">PC명:</b> <span style="color: #2d3748; font-weight: 500;">${s.pc || "-"}</span></div>
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">등록일:</b> <span style="color: #2d3748; font-weight: 500;">${s.regDate}</span></div>
+            <div><b style="color: #4a5568;">만료일:</b> <span style="color: #2d3748; font-weight: 500;">${s.expDate}</span></div>
+          </div>
+          <div class="modal-btns">
+            <button onclick="closeModal()">닫기</button>
+          </div>
+        `;
+      } else if(type === 'memo') {
+        modalContent.innerHTML = `
+          <div style="font-size:20px; font-weight:700; margin-bottom: 20px; color: #2d3748;">메모 관리</div>
+          <textarea id="memoContent" placeholder="메모 입력">${s.memo}</textarea>
+          <div class="modal-btns">
+            <button onclick="saveMemo(${s.id})" class="btn-action">저장</button>
+            <button onclick="deleteMemo(${s.id})" class="btn-delete">삭제</button>
+            <button onclick="closeModal()">취소</button>
+          </div>
+        `;
+      } else if(type === 'add') {
+        modalContent.innerHTML = `
+          <div style="font-size:20px; font-weight:700; margin-bottom: 24px; color: #2d3748;">시리얼 등록</div>
+          <input type="text" id="addSerialNum" placeholder="시리얼 번호 입력 (예: ABCD-1234-EFGH-5678)">
+          <input type="date" id="addRegDate" value="${new Date().toISOString().substring(0,10)}">
+          <input type="date" id="addExpDate" value="">
+          <div class="modal-btns">
+            <button onclick="addSerial()" class="btn-action">등록</button>
+            <button onclick="closeModal()">취소</button>
+          </div>
+        `;
+      }
+      modalBg.style.display = "flex";
+    }
+    function closeModal() {
+      modalBg.style.display = "none";
+    }
+    // 등록/배분/회수/추가
+    document.getElementById('btnAddSerial').onclick = () => openModal('add');
+    function addSerial() {
+      let serialNum = document.getElementById('addSerialNum').value.trim();
+      let regDate = document.getElementById('addRegDate').value;
+      let expDate = document.getElementById('addExpDate').value;
+      if(!serialNum || !regDate || !expDate) return alert('모든 값을 입력하세요.');
+      if(serials.find(x => x.serial === serialNum)) return alert('이미 등록된 시리얼입니다.');
+      serials.push({ id: Date.now(), serial: serialNum, status: "미배분", user: "", pc: "", regDate, expDate, memo: "" });
+      closeModal(); renderWidgets(); renderTable();
+    }
+    function assignSerial(id) {
+      let user = document.getElementById('assignUser').value.trim();
+      let pc = document.getElementById('assignPC').value.trim();
+      if(!user || !pc) return alert('사용자명과 PC명을 입력하세요.');
+      let idx = serials.findIndex(x => x.id === id);
+      serials[idx].status = "사용중";
+      serials[idx].user = user;
+      serials[idx].pc = pc;
+      closeModal(); renderWidgets(); renderTable();
+    }
+    function revokeSerial(id) {
+      let idx = serials.findIndex(x => x.id === id);
+      serials[idx].status = "회수";
+      serials[idx].user = "";
+      serials[idx].pc = "";
+      closeModal(); renderWidgets(); renderTable();
+    }
+    function saveMemo(id) {
+      let memoVal = document.getElementById('memoContent').value.trim();
+      let idx = serials.findIndex(x => x.id === id);
+      serials[idx].memo = memoVal;
+      closeModal(); renderTable();
+    }
+    function deleteMemo(id) {
+      if(confirm("정말 메모를 삭제하시겠습니까?")) {
+        let idx = serials.findIndex(x => x.id === id);
+        serials[idx].memo = "";
+        closeModal(); renderTable();
+      }
+    }
+    // 엑셀 내보내기(간단 CSV)
+    function exportExcel() {
+      let csv = '시리얼번호,상태,배분대상자,PC명,등록일,만료일,메모\n' +
+        serials.map(s => `${s.serial},${s.status},${s.user || "-"},${s.pc || "-"},${s.regDate},${s.expDate},"${(s.memo || "").replace(/"/g, '""')}"`).join('\n');
+      let blob = new Blob([csv], {type: 'text/csv'});
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url; a.download = "시리얼관리.csv"; a.click();
+      URL.revokeObjectURL(url);
+    }
+    window.addEventListener('keydown', (e) => { if(e.key === "Escape") closeModal(); });
+    modalBg.onclick = function(e) { if(e.target === modalBg) closeModal(); };
+  </script>
+</body>
+</html>

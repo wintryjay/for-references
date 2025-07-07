@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>조직/사용자 관리 - 큐빅 관리자</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0; 
+      font-family: 'Noto Sans KR', sans-serif; 
+      background: #f5f7fa;
+      color: #2c3e50;
+      line-height: 1.6;
+    }
+    .container { 
+      display: flex; 
+      height: 100vh; 
+    }
+    .sidebar {
+      width: 280px; 
+      background: #4299e1;
+      display: flex; 
+      flex-direction: column; 
+      align-items: flex-start; 
+      padding: 32px 0 0 0;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+    }
+    .sidebar .logo { 
+      font-weight: 700; 
+      font-size: 22px; 
+      margin-left: 32px; 
+      margin-bottom: 48px;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .sidebar nav { 
+      width: 100%; 
+    }
+    .sidebar nav a {
+      display: block; 
+      padding: 16px 32px; 
+      color: rgba(255,255,255,0.9); 
+      text-decoration: none;
+      font-size: 16px; 
+      font-weight: 500;
+      border-left: 4px solid transparent; 
+      transition: all 0.3s ease;
+    }
+    .sidebar nav a:hover,
+    .sidebar nav a.active { 
+      background: rgba(255,255,255,0.15);
+      border-left: 4px solid #ffffff; 
+      color: #ffffff;
+    }
+    .main {
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      min-width: 0;
+      background: #ffffff;
+    }
+    .topbar {
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      background: #ffffff;
+      padding: 0 40px; 
+      height: 80px; 
+      border-bottom: 1px solid #e2e8f0;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .topbar-title { 
+      font-size: 28px; 
+      font-weight: 700;
+      color: #4299e1;
+    }
+    .topbar-btn {
+      background: #4299e1;
+      color: #fff; 
+      border: none; 
+      font-size: 16px; 
+      padding: 14px 28px;
+      border-radius: 12px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+    }
+    .topbar-btn:hover { 
+      background: #3182ce;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4);
+    }
+    .main-content { 
+      flex: 1; 
+      display: flex; 
+      flex-direction: column; 
+      overflow: hidden;
+    }
+    .selected-org-info {
+      margin: 24px 40px 16px 40px; 
+      font-size: 18px; 
+      font-weight: 600; 
+      color: #4299e1;
+      padding: 16px 20px;
+      background: #ebf8ff;
+      border-radius: 12px;
+      border-left: 4px solid #4299e1;
+    }
+    .user-org-area { 
+      display: flex; 
+      flex: 1; 
+      min-width: 0; 
+    }
+    .user-table-area { 
+      flex: 1; 
+      padding: 0 40px 32px 40px; 
+      background: transparent; 
+      display: flex; 
+      flex-direction: column;
+    }
+    .org-tree-panel {
+      width: 320px; 
+      background: #ffffff; 
+      border-left: 1px solid #e2e8f0; 
+      transition: all 0.3s ease; 
+      position: relative;
+      box-shadow: -4px 0 20px rgba(0,0,0,0.05);
+      z-index: 2;
+      display: flex; 
+      flex-direction: column;
+    }
+    .org-tree-panel.closed { 
+      width: 0; 
+      min-width: 0; 
+      padding: 0 !important; 
+      border: none; 
+      box-shadow: none;
+      overflow: hidden;
+    }
+    .org-tree-header {
+      display: flex; 
+      align-items: center; 
+      justify-content: space-between;
+      padding: 24px 20px 16px 20px; 
+      background: #f8fafc; 
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .org-tree-title { 
+      font-size: 18px; 
+      font-weight: 700;
+      color: #2d3748;
+    }
+    .org-tree-header button {
+      background: #4299e1;
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .org-tree-header button:hover {
+      background: #3182ce;
+      transform: translateY(-1px);
+    }
+    .org-tree-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+    .org-tree-ul { 
+      list-style: none; 
+      padding: 0; 
+      margin: 0; 
+    }
+    .org-node { 
+      margin-bottom: 8px; 
+    }
+    .org-node.selected > .org-node-label { 
+      background: #ebf8ff; 
+      color: #4299e1;
+      border: 2px solid #4299e1;
+    }
+    .org-node-label {
+      padding: 12px 16px; 
+      border-radius: 10px; 
+      cursor: pointer; 
+      display: inline-block; 
+      min-width: 120px;
+      font-size: 15px; 
+      font-weight: 500;
+      margin-right: 8px; 
+      transition: all 0.3s ease;
+      background: #ffffff;
+      border: 2px solid #e2e8f0;
+    }
+    .org-node-label:hover {
+      background: #f7fafc;
+      border-color: #cbd5e0;
+      transform: translateY(-1px);
+    }
+    .org-node-btns {
+      display: inline-flex;
+      gap: 4px;
+    }
+    .org-node-btns button {
+      background: #ffffff; 
+      border: 1px solid #e2e8f0; 
+      color: #718096; 
+      border-radius: 6px; 
+      font-size: 12px;
+      padding: 6px 10px; 
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+    }
+    .org-node-btns button:hover { 
+      background: #4299e1; 
+      color: #ffffff;
+      border-color: #4299e1;
+    }
+    .org-children { 
+      margin-left: 24px; 
+      margin-top: 8px;
+    }
+    .toggle-org-panel {
+      position: absolute; 
+      left: -36px; 
+      top: 50px; 
+      width: 32px; 
+      height: 48px; 
+      border-radius: 8px 0 0 8px;
+      background: #4299e1; 
+      color: #fff; 
+      border: none; 
+      font-size: 18px; 
+      font-weight: 700; 
+      cursor: pointer;
+      display: flex; 
+      align-items: center; 
+      justify-content: center;
+      z-index: 3; 
+      box-shadow: -2px 2px 10px rgba(0,0,0,0.1);
+      transition: all 0.3s ease;
+    }
+    .toggle-org-panel.closed { 
+      left: 0; 
+      background: #718096;
+      border-radius: 0 8px 8px 0;
+    }
+    .toggle-org-panel:hover {
+      background: #3182ce;
+    }
+    .toolbar-area {
+      display: flex; 
+      justify-content: flex-end; 
+      align-items: center; 
+      margin-bottom: 20px;
+      gap: 12px;
+    }
+    .toolbar-area input, .toolbar-area select {
+      padding: 12px 16px; 
+      border: 2px solid #e2e8f0; 
+      border-radius: 10px; 
+      font-size: 15px;
+      transition: all 0.3s ease;
+      background: #ffffff;
+      font-weight: 500;
+    }
+    .toolbar-area input:focus, .toolbar-area select:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+    .toolbar-area button { 
+      padding: 12px 20px; 
+      border-radius: 10px; 
+      border: 2px solid #4299e1; 
+      color: #4299e1; 
+      background: #ffffff; 
+      font-weight: 600; 
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .toolbar-area button:hover { 
+      background: #4299e1;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+    }
+    table { 
+      width: 100%; 
+      border-collapse: collapse; 
+      background: #ffffff; 
+      font-size: 15px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    th, td {
+      padding: 18px 16px; 
+      text-align: left;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    th { 
+      background: #f8fafc;
+      color: #4a5568;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    tr:last-child td { 
+      border-bottom: none; 
+    }
+    tbody tr {
+      transition: all 0.2s ease;
+    }
+    tbody tr:hover {
+      background: #f7fafc;
+    }
+    .user-grade { 
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      min-width: 60px;
+      display: inline-block;
+    }
+    .grade-admin {
+      background: #fed7d7;
+      color: #c53030;
+    }
+    .grade-normal {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+    .grade-limited {
+      background: #feebc8;
+      color: #c05621;
+    }
+    .user-state { 
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      min-width: 60px;
+      display: inline-block;
+    }
+    .state-active {
+      background: #c6f6d5;
+      color: #22543d;
+    }
+    .state-inactive {
+      background: #e2e8f0;
+      color: #4a5568;
+    }
+    .state-withdrawn {
+      background: #fed7d7;
+      color: #c53030;
+    }
+    .btn-action {
+      background: #4299e1;
+      color: #fff; 
+      border: none; 
+      border-radius: 8px; 
+      padding: 8px 16px;
+      margin-right: 6px; 
+      cursor: pointer; 
+      font-size: 14px; 
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 10px rgba(66, 153, 225, 0.3);
+    }
+    .btn-action:hover { 
+      background: #3182ce;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.4);
+    }
+    .btn-view {
+      background: #ffffff; 
+      color: #4299e1; 
+      border: 2px solid #4299e1; 
+      padding: 6px 14px; 
+      border-radius: 8px; 
+      cursor: pointer; 
+      font-weight: 600; 
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+    .btn-view:hover { 
+      background: #4299e1;
+      color: #ffffff;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+    }
+    .empty-state {
+      margin-top: 80px; 
+      color: #718096; 
+      text-align: center;
+    }
+    .empty-state p { 
+      margin-top: 16px; 
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .empty-state button {
+      margin-top: 24px; 
+      background: #4299e1;
+      color: #fff; 
+      border: none; 
+      border-radius: 12px;
+      padding: 14px 28px; 
+      font-size: 16px; 
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+    }
+    .empty-state button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4);
+    }
+    .modal-bg {
+      display: none; 
+      position: fixed; 
+      top: 0; 
+      left: 0; 
+      width: 100vw; 
+      height: 100vh;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(5px);
+      z-index: 999;
+      align-items: center; 
+      justify-content: center;
+    }
+    .modal {
+      background: #ffffff;
+      padding: 40px 44px; 
+      border-radius: 20px; 
+      min-width: 400px;
+      max-width: 90vw;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+    .modal input[type="text"], .modal select {
+      width: 90%; 
+      margin: 16px auto; 
+      padding: 14px 18px; 
+      font-size: 15px;
+      border-radius: 10px; 
+      border: 2px solid #e2e8f0;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      box-sizing: border-box;
+    }
+    .modal input[type="text"]:focus, .modal select:focus {
+      outline: none;
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+    }
+    .modal-btns { 
+      margin-top: 28px; 
+      display: flex; 
+      gap: 16px; 
+      justify-content: center; 
+    }
+    .modal-btns button { 
+      min-width: 100px;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .modal-btns .btn-action {
+      background: #4299e1;
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+    }
+    .modal-btns .btn-action:hover {
+      background: #3182ce;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(66, 153, 225, 0.4);
+    }
+    .modal-btns button:not(.btn-action) {
+      background: #ffffff;
+      color: #718096;
+      border: 2px solid #e2e8f0;
+    }
+    .modal-btns button:not(.btn-action):hover {
+      background: #f7fafc;
+      border-color: #cbd5e0;
+    }
+    .login-history-table {
+      width: 100%; 
+      border-collapse: collapse; 
+      font-size: 14px; 
+      margin: 16px 0;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .login-history-table th, .login-history-table td {
+      padding: 12px 16px; 
+      border-bottom: 1px solid #f1f5f9; 
+      text-align: left;
+    }
+    .login-history-table th { 
+      background: #f8fafc;
+      font-weight: 600;
+      color: #4a5568;
+    }
+    .login-history-table tr:last-child td { 
+      border-bottom: none; 
+    }
+    @media (max-width: 1200px) {
+      .user-org-area { 
+        flex-direction: column-reverse; 
+      }
+      .org-tree-panel { 
+        width: 100% !important; 
+        min-width: 0; 
+        border-left: none; 
+        border-top: 1px solid #e2e8f0;
+        box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+        max-height: 300px;
+      }
+      .user-table-area { 
+        padding: 0 20px 20px 20px; 
+      }
+      .selected-org-info {
+        margin: 24px 20px 16px 20px;
+      }
+      .toggle-org-panel {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="logo">주식회사 큐빅</div>
+      <nav>
+        <a href="#">대시보드</a>
+        <a href="#">시리얼 관리</a>
+        <a href="#" class="active">조직/사용자 관리</a>
+        <a href="#">문서함</a>
+        <a href="#">공지사항</a>
+      </nav>
+    </aside>
+    <main class="main">
+      <div class="topbar">
+        <span class="topbar-title">조직/사용자 관리</span>
+        <button class="topbar-btn" onclick="openUserModal('add')">+ 사용자 추가</button>
+      </div>
+      <div class="main-content">
+        <div class="selected-org-info" id="selectedOrgInfo">전체 조직(부서) 보기</div>
+        <div class="user-org-area">
+          <!-- 사용자 테이블 -->
+          <div class="user-table-area">
+            <div class="toolbar-area">
+              <select id="filterGrade">
+                <option value="">전체 등급</option>
+                <option value="관리자">관리자</option>
+                <option value="일반">일반</option>
+                <option value="제한">제한</option>
+              </select>
+              <select id="filterState">
+                <option value="">전체 상태</option>
+                <option value="활성">활성</option>
+                <option value="중지">중지</option>
+                <option value="탈퇴">탈퇴</option>
+              </select>
+              <input type="text" id="searchUser" placeholder="이름/이메일 검색">
+              <button onclick="renderUsers()">검색</button>
+              <button onclick="exportUserExcel()">엑셀 내보내기</button>
+            </div>
+            <div id="userTableArea"></div>
+          </div>
+          <!-- 조직 트리 패널 (오른쪽) -->
+          <div class="org-tree-panel" id="orgTreePanel">
+            <div class="org-tree-header">
+              <span class="org-tree-title">조직/부서</span>
+              <button onclick="openOrgModal('add')">+ 추가</button>
+            </div>
+            <div class="org-tree-content">
+              <ul class="org-tree-ul" id="orgTree"></ul>
+            </div>
+            <button class="toggle-org-panel" id="toggleOrgPanel" title="조직 패널 닫기" onclick="toggleOrgPanel()">→</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-bg" id="modalBg">
+        <div class="modal" id="modalContent"></div>
+      </div>
+    </main>
+  </div>
+  <script>
+    // 조직 트리, 사용자, 로그인 이력 샘플
+    let orgs = [
+      { id:1, name:"서울본사", parent:null },
+      { id:2, name:"개발팀", parent:1 },
+      { id:3, name:"영업팀", parent:1 },
+      { id:4, name:"부산지사", parent:null },
+      { id:5, name:"기술지원", parent:4 }
+    ];
+    let users = [
+      { id: 1, org:2, name:"홍길동", email:"hong@cubig.com", position:"대리", grade:"관리자", state:"활성", regDate:"2024-01-20", serial:"ABCD-1234-EFGH-5678" },
+      { id: 2, org:2, name:"김철수", email:"kim@cubig.com", position:"과장", grade:"일반", state:"활성", regDate:"2024-03-02", serial:"" },
+      { id: 3, org:3, name:"박영희", email:"park@cubig.com", position:"사원", grade:"일반", state:"중지", regDate:"2024-02-01", serial:"JKLM-4321-IJKL-9876" },
+      { id: 4, org:5, name:"이민수", email:"min@cubig.com", position:"부장", grade:"제한", state:"활성", regDate:"2024-04-11", serial:"" }
+    ];
+    let loginHistories = {
+      1: [
+        { date:"2025-07-03 09:16", ip:"192.168.1.41", browser:"Chrome", os:"Windows 11" },
+        { date:"2025-07-01 14:33", ip:"192.168.1.41", browser:"Chrome", os:"Windows 11" }
+      ],
+      2: [
+        { date:"2025-06-30 09:15", ip:"192.168.1.110", browser:"Edge", os:"Windows 10" }
+      ],
+      3: [],
+      4: [
+        { date:"2025-07-02 13:05", ip:"10.10.12.8", browser:"Chrome", os:"MacOS" }
+      ]
+    };
+    let selectedOrg = null;
+    let orgPanelOpened = true;
+    let modalBg = document.getElementById('modalBg');
+    let modalContent = document.getElementById('modalContent');
+
+    function getGradeBadge(grade) {
+      const gradeClasses = {
+        "관리자": "grade-admin",
+        "일반": "grade-normal",
+        "제한": "grade-limited"
+      };
+      return `<span class="user-grade ${gradeClasses[grade]}">${grade}</span>`;
+    }
+
+    function getStateBadge(state) {
+      const stateClasses = {
+        "활성": "state-active",
+        "중지": "state-inactive",
+        "탈퇴": "state-withdrawn"
+      };
+      return `<span class="user-state ${stateClasses[state]}">${state}</span>`;
+    }
+
+    // 조직트리 렌더
+    function renderOrgTree() {
+      function getChildren(parentId) {
+        return orgs.filter(o => o.parent===parentId);
+      }
+      function renderNodes(parentId) {
+        return getChildren(parentId).map(o => `
+          <li class="org-node${selectedOrg===o.id?" selected":""}">
+            <span class="org-node-label" onclick="selectOrg(${o.id})">${o.name}</span>
+            <span class="org-node-btns">
+              <button onclick="openOrgModal('edit',${o.id});event.stopPropagation();">수정</button>
+              <button onclick="deleteOrg(${o.id});event.stopPropagation();">삭제</button>
+            </span>
+            ${getChildren(o.id).length ? `<ul class="org-children">${renderNodes(o.id)}</ul>` : ""}
+          </li>
+        `).join('');
+      }
+      document.getElementById('orgTree').innerHTML = renderNodes(null);
+    }
+    renderOrgTree();
+
+    function selectOrg(id) {
+      selectedOrg = id;
+      let org = orgs.find(o=>o.id===id);
+      document.getElementById('selectedOrgInfo').textContent = org ? `선택 조직(부서): ${org.name}` : '전체 조직(부서) 보기';
+      renderOrgTree(); renderUsers();
+    }
+
+    function toggleOrgPanel() {
+      orgPanelOpened = !orgPanelOpened;
+      let orgPanel = document.getElementById('orgTreePanel');
+      let btn = document.getElementById('toggleOrgPanel');
+      if(orgPanelOpened) {
+        orgPanel.classList.remove('closed');
+        btn.innerText = "→";
+        btn.title = "조직 패널 닫기";
+      } else {
+        orgPanel.classList.add('closed');
+        btn.innerText = "←";
+        btn.title = "조직 패널 열기";
+      }
+    }
+
+    // 사용자 테이블 렌더
+    function renderUsers() {
+      let area = document.getElementById('userTableArea');
+      let g = document.getElementById('filterGrade').value;
+      let s = document.getElementById('filterState').value;
+      let q = document.getElementById('searchUser').value.trim();
+      let rows = users.filter(u => {
+        let ok = true;
+        if(selectedOrg) ok = u.org===selectedOrg;
+        if(g) ok = ok && u.grade===g;
+        if(s) ok = ok && u.state===s;
+        if(q) ok = ok && (u.name.includes(q) || u.email.includes(q));
+        return ok;
+      });
+      if(rows.length===0) {
+        area.innerHTML = `<div class="empty-state"><p>해당 조직의 사용자가 없습니다.<br>[사용자 추가] 버튼으로 새 사용자를 등록하세요.</p></div>`;
+        return;
+      }
+      let orgMap = {}; orgs.forEach(o=>orgMap[o.id]=o.name);
+      area.innerHTML = `
+        <table>
+          <thead>
+            <tr>
+              <th>이름</th>
+              <th>이메일</th>
+              <th>조직/부서</th>
+              <th>직급</th>
+              <th>등급</th>
+              <th>상태</th>
+              <th>등록일</th>
+              <th>시리얼</th>
+              <th>관리</th>
+              <th>상세</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(u=>`
+              <tr>
+                <td style="font-weight: 600;">${u.name}</td>
+                <td>${u.email}</td>
+                <td>${orgMap[u.org]||""}</td>
+                <td>${u.position||"-"}</td>
+                <td>${getGradeBadge(u.grade)}</td>
+                <td>${getStateBadge(u.state)}</td>
+                <td>${u.regDate}</td>
+                <td style="font-family: monospace; font-weight: 600;">${u.serial||"-"}</td>
+                <td>
+                  ${u.serial
+                    ? `<button class="btn-action" onclick="openSerialModal(${u.id},'revoke')">회수</button>`
+                    : `<button class="btn-action" onclick="openSerialModal(${u.id},'assign')">배분</button>`
+                  }
+                </td>
+                <td><button class="btn-view" onclick="openUserModal('detail',${u.id})">보기</button></td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+    renderUsers();
+
+    document.getElementById('filterGrade').onchange =
+    document.getElementById('filterState').onchange =
+    document.getElementById('searchUser').oninput = renderUsers;
+
+    // 조직 관리 모달
+    function openOrgModal(type, id) {
+      let org = orgs.find(o=>o.id===id)||{name:""};
+      if(type==="add") {
+        modalContent.innerHTML = `
+          <div style="font-size:20px; font-weight:700; margin-bottom: 24px; color: #2d3748;">조직(부서) 추가</div>
+          <input type="text" id="orgName" placeholder="조직명">
+          <div class="modal-btns">
+            <button onclick="addOrg()" class="btn-action">추가</button>
+            <button onclick="closeModal()">취소</button>
+          </div>
+        `;
+      } else if(type==="edit") {
+        modalContent.innerHTML = `
+          <div style="font-size:20px; font-weight:700; margin-bottom: 24px; color: #2d3748;">조직(부서) 수정</div>
+          <input type="text" id="orgName" value="${org.name}">
+          <div class="modal-btns">
+            <button onclick="editOrg(${id})" class="btn-action">저장</button>
+            <button onclick="closeModal()">취소</button>
+          </div>
+        `;
+      }
+      modalBg.style.display="flex";
+    }
+    function addOrg() {
+      let name = document.getElementById('orgName').value.trim();
+      if(!name) return alert("조직명을 입력하세요.");
+      orgs.push({id:Date.now(), name, parent:selectedOrg||null});
+      closeModal(); renderOrgTree();
+    }
+    function editOrg(id) {
+      let name = document.getElementById('orgName').value.trim();
+      if(!name) return alert("조직명을 입력하세요.");
+      let idx = orgs.findIndex(o=>o.id===id);
+      orgs[idx].name = name;
+      closeModal(); renderOrgTree();
+    }
+    function deleteOrg(id) {
+      if(!confirm("해당 조직을 삭제할까요?")) return;
+      orgs = orgs.filter(o=>o.id!==id && o.parent!==id);
+      users = users.filter(u=>u.org!==id);
+      if(selectedOrg===id) { selectedOrg=null; document.getElementById('selectedOrgInfo').textContent='전체 조직(부서) 보기'; }
+      renderOrgTree(); renderUsers();
+    }
+
+    // 사용자 관리 모달
+    function openUserModal(type, id) {
+      let user = users.find(u=>u.id===id)||{org:selectedOrg||"", name:"", email:"", position:"", grade:"일반", state:"활성", regDate:"", serial:""};
+      let orgOptions = orgs.map(o=>`<option value="${o.id}"${user.org===o.id?" selected":""}>${o.name}</option>`).join('');
+      if(type==="add") {
+        modalContent.innerHTML = `
+          <div style="font-size:20px; font-weight:700; margin-bottom: 24px; color: #2d3748;">사용자 추가</div>
+          <input type="text" id="userName" placeholder="이름">
+          <input type="text" id="userEmail" placeholder="이메일">
+          <input type="text" id="userPosition" placeholder="직급">
+          <select id="userOrg">${orgOptions}</select>
+          <select id="userGrade">
+            <option value="관리자">관리자</option>
+            <option value="일반" selected>일반</option>
+            <option value="제한">제한</option>
+          </select>
+          <select id="userState">
+            <option value="활성" selected>활성</option>
+            <option value="중지">중지</option>
+            <option value="탈퇴">탈퇴</option>
+          </select>
+          <div class="modal-btns">
+            <button onclick="addUser()" class="btn-action">추가</button>
+            <button onclick="closeModal()">취소</button>
+          </div>
+        `;
+      } else if(type==="detail") {
+        let orgName = orgs.find(o=>o.id===user.org)?.name||"";
+        let logs = loginHistories[user.id]||[];
+        modalContent.innerHTML = `
+          <div style="font-size:20px; font-weight:700; margin-bottom: 24px; color: #2d3748;">사용자 상세정보</div>
+          <div style="text-align:left; margin:20px 0 24px; background: #f7fafc; padding: 20px; border-radius: 12px; line-height: 1.8;">
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">이름:</b> <span style="color: #2d3748; font-weight: 500;">${user.name}</span></div>
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">이메일:</b> <span style="color: #2d3748; font-weight: 500;">${user.email}</span></div>
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">조직/부서:</b> <span style="color: #2d3748; font-weight: 500;">${orgName}</span></div>
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">직급:</b> <span style="color: #2d3748; font-weight: 500;">${user.position||"-"}</span></div>
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">등급:</b> ${getGradeBadge(user.grade)}</div>
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">상태:</b> ${getStateBadge(user.state)}</div>
+            <div style="margin-bottom: 12px;"><b style="color: #4a5568;">등록일:</b> <span style="color: #2d3748; font-weight: 500;">${user.regDate}</span></div>
+            <div><b style="color: #4a5568;">시리얼:</b> <span style="font-family: monospace; color: #4299e1; font-weight: 600;">${user.serial||"-"}</span></div>
+          </div>
+          <div style="font-size:16px; font-weight:600; margin:20px 0 12px 0; text-align:left; color: #2d3748;">로그인 이력</div>
+          <table class="login-history-table">
+            <thead>
+              <tr>
+                <th>일시</th>
+                <th>IP</th>
+                <th>브라우저</th>
+                <th>OS</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${logs.length ? logs.map(l=>`
+                <tr>
+                  <td>${l.date}</td>
+                  <td>${l.ip}</td>
+                  <td>${l.browser}</td>
+                  <td>${l.os}</td>
+                </tr>
+              `).join('') : `<tr><td colspan="4" style="color:#718096; text-align: center;">이력이 없습니다.</td></tr>`}
+            </tbody>
+          </table>
+          <div class="modal-btns">
+            <button onclick="closeModal()">닫기</button>
+          </div>
+        `;
+      }
+      modalBg.style.display="flex";
+    }
+    function addUser() {
+      let name = document.getElementById('userName').value.trim();
+      let email = document.getElementById('userEmail').value.trim();
+      let position = document.getElementById('userPosition').value.trim();
+      let org = +document.getElementById('userOrg').value;
+      let grade = document.getElementById('userGrade').value;
+      let state = document.getElementById('userState').value;
+      if(!name||!email||!org) return alert("모든 값을 입력하세요.");
+      users.push({ id: Date.now(), org, name, email, position, grade, state, regDate: new Date().toISOString().substring(0,10), serial:"" });
+      closeModal(); renderUsers();
+    }
+
+    // 시리얼 배분/회수
+    function openSerialModal(uid, mode) {
+      let u = users.find(x=>x.id===uid);
+      if(mode==="revoke") {
+        modalContent.innerHTML = `
+          <div style="font-size:20px; font-weight:700; margin-bottom: 20px; color: #2d3748;">시리얼 회수</div>
+          <div style="margin:16px 0 20px; padding: 16px; background: #fef5e7; border-radius: 10px; border-left: 4px solid #f6ad55;">현재 할당된 시리얼:<br>
+          <b style="font-family: monospace; color: #4299e1;">${u.serial}</b></div>
+          <div class="modal-btns">
+            <button onclick="revokeSerial(${uid})" class="btn-action">회수</button>
+            <button onclick="closeModal()">취소</button>
+          </div>
+        `;
+      } else {
+        modalContent.innerHTML = `
+          <div style="font-size:20px; font-weight:700; margin-bottom: 20px; color: #2d3748;">시리얼 배분</div>
+          <input type="text" id="serialNum" placeholder="시리얼 번호 입력">
+          <div class="modal-btns">
+            <button onclick="assignSerial(${uid})" class="btn-action">배분</button>
+            <button onclick="closeModal()">취소</button>
+          </div>
+        `;
+      }
+      modalBg.style.display = "flex";
+    }
+    function assignSerial(uid) {
+      let sn = document.getElementById('serialNum').value.trim();
+      if(!sn) return alert("시리얼 번호를 입력하세요.");
+      let idx = users.findIndex(u=>u.id===uid);
+      users[idx].serial = sn;
+      closeModal(); renderUsers();
+    }
+    function revokeSerial(uid) {
+      let idx = users.findIndex(u=>u.id===uid);
+      users[idx].serial = "";
+      closeModal(); renderUsers();
+    }
+
+    function exportUserExcel() {
+      let orgMap = {}; orgs.forEach(o=>orgMap[o.id]=o.name);
+      let filtered = users.filter(u=>{
+        let ok=true;
+        if(selectedOrg) ok=ok&&u.org===selectedOrg;
+        let g = document.getElementById('filterGrade').value;
+        let s = document.getElementById('filterState').value;
+        let q = document.getElementById('searchUser').value.trim();
+        if(g) ok=ok&&u.grade===g;
+        if(s) ok=ok&&u.state===s;
+        if(q) ok=ok&&(u.name.includes(q)||u.email.includes(q));
+        return ok;
+      });
+      let csv = '이름,이메일,조직/부서,직급,등급,상태,등록일,시리얼\n' +
+        filtered.map(u =>
+          `${u.name},${u.email},${orgMap[u.org]||""},${u.position||"-"},${u.grade},${u.state},${u.regDate},${u.serial||"-"}`
+        ).join('\n');
+      let blob = new Blob([csv], {type:'text/csv'});
+      let url = URL.createObjectURL(blob);
+      let a = document.createElement('a');
+      a.href = url; a.download = "조직_사용자관리.csv"; a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function closeModal() { modalBg.style.display="none"; }
+    window.addEventListener('keydown', (e) => { if(e.key==="Escape") closeModal(); });
+    modalBg.onclick = function(e) { if(e.target===modalBg) closeModal(); };
+
+    // 처음에 조직 정보 표시
+    document.getElementById('selectedOrgInfo').textContent='전체 조직(부서) 보기';
+  </script>
+</body>
+</html>
