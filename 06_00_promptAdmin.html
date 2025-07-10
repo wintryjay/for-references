@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>고객사 어드민: 대화 관리</title>
+  <meta name="viewport" content="width=1200">
+  <style>
+    body { margin:0; background:#f8fafd; font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; }
+    .admin-layout { display: flex; height: 100vh; }
+    .sidebar { width: 210px; background: #212b42; display: flex; flex-direction: column; color:#fff; min-width:52px; }
+    .company-name { font-size:18.5px; font-weight:600; height:65px; display:flex; align-items:center; box-sizing:border-box; padding:0 24px; border-bottom:1px solid #e5e8ef;}
+    .sidebar nav { 
+      width: 100%; 
+    }
+    .sidebar nav a {
+      display: block; 
+      padding: 16px 32px; 
+      color: rgba(255,255,255,0.9); 
+      text-decoration: none;
+      font-size: 16px; 
+      font-weight: 500;
+      border-left: 4px solid transparent; 
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .sidebar nav a:hover,
+    .sidebar nav a.active { 
+      background: rgba(255,255,255,0.15);
+      border-left: 4px solid #ffffff; 
+      color: #ffffff;
+    }
+    .main-content { flex:1; display:flex; flex-direction:column; }
+    .topbar { background:#fff; height:65px; display:flex; align-items:center; justify-content:flex-end;
+      box-sizing: border-box; padding:0 24px; border-bottom:1px solid #e5e8ef; }
+    .contract { color:#2b63bf; font-size:15.5px; font-weight:600; }
+    .admin-info { color:#333; font-size:15.3px; }
+    .edit-btn { font-size:12.5px; margin-left:7px; background:#f4f7fe; border:none; border-radius:5px; padding:2.5px 9px; cursor:pointer; color:#4461b1;}
+    .logout-btn { font-size:14.3px; background:#3a4b7b; color:#fff; border:none; border-radius:7px; padding:7px 18px; font-weight:600; cursor:pointer; margin-left:12px;}
+    .content-wrap { padding:32px 38px 0 38px; }
+    .section-title { font-size:22px; font-weight:700; color:#25304e; margin-bottom:24px;}
+    /* --- 위험성 위젯 --- */
+    .risk-widgets { display:flex; gap:19px; margin-bottom:19px;}
+    .risk-widget { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background:#fff; border-radius:12px; box-shadow:0 1px 8px #ebedf1; padding:18px 0 15px 0; cursor:pointer;
+      border:2.3px solid transparent; transition:.18s; position:relative;}
+    .risk-widget.selected { border:2.3px solid #35747f; box-shadow:0 2px 15px #dde8fa;}
+    .risk-widget .risk-label { font-size:15.4px; font-weight:600; letter-spacing:-0.5px;}
+    .risk-widget .risk-count { font-size:23px; font-weight:700; margin-top:9px;}
+    .risk-widget.risk-all .risk-label { color:#1a2145; }
+    .risk-widget.risk-all .risk-count { color:#36455c;}
+    .risk-widget.risk-none .risk-label { color:#35747f; }
+    .risk-widget.risk-warn .risk-label { color:#ff7a36; }
+    .risk-widget.risk-block .risk-label { color:#cc1e33; }
+    .risk-widget.risk-none .risk-count { color:#35747f;}
+    .risk-widget.risk-warn .risk-count { color:#ff7a36;}
+    .risk-widget.risk-block .risk-count { color:#cc1e33;}
+    /* ------------------ */
+    .toolbar { display:flex; align-items:center; gap:13px; margin-bottom:15px;}
+    .toolbar label { font-size:15.5px; font-weight:500; }
+    .toolbar select, .toolbar input[type="text"] { font-size:15px; border-radius:7px; border:1px solid #c7d1e7; padding:7px 12px;}
+    .toolbar .search-btn { background:#2d6edb; color:#fff; border:none; border-radius:7px; padding:7px 19px; font-size:15px; font-weight:600; cursor:pointer;}
+    .toolbar .policy-btn { background:#fff4ea; color:#bc5e0a; border:1.2px solid #edbb83; border-radius:7px; font-weight:600; padding:7px 21px; margin-left:auto; cursor:pointer; }
+    .table-wrap { background:#fff; border-radius:11px; box-shadow:0 1px 8px #ebedf1; padding:20px 24px 17px 24px; }
+    .chat-table { width:100%; border-collapse:collapse; }
+    .chat-table th, .chat-table td { border-bottom:1px solid #e8ebf1; padding:7px 5px; font-size:14.7px; text-align:center;}
+    .chat-table th { color:#46507d; background:#f6f8fd;}
+    .chat-table td { background:#fff;}
+    .chat-table td.prompt, .chat-table td.answer { max-width:220px; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;}
+    .chat-table td.risk { font-weight:600; }
+    .chat-table td.risk.none { color:#35747f; }
+    .chat-table td.risk.warn { color:#ff7a36; }
+    .chat-table td.risk.block { color:#cc1e33; }
+    .chat-table td.status { font-weight:500; }
+    .chat-table td.status.done { color:#217d46; }
+    .chat-table td.status.new { color:#3150c6;}
+    .chat-table td.status.blocked { color:#cc1e33; }
+    .chat-table .manage-btn { background:#f6f2fe; color:#7a51c2; border:none; border-radius:7px; padding:6px 15px; font-size:14px; cursor:pointer;}
+    .chat-table .manage-btn:hover { background:#e8e2fb;}
+    .pagination { margin:16px 0 4px 0; text-align:center;}
+    .pagination button { margin:0 3px; border:none; background:#e6ebf6; border-radius:5px; padding:4px 12px; font-size:14px; cursor:pointer;}
+    .pagination button.active { background:#4367bd; color:#fff;}
+    /* 정책관리 모달 */
+    .modal-bg { position:fixed; left:0; top:0; width:100vw; height:100vh; background:rgba(44,52,80,0.16); display:none; z-index:20;}
+    .modal { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:#fff; border-radius:15px; min-width:470px; width:520px; max-width:94vw; padding:28px 34px 28px 34px; z-index:22; box-shadow:0 2px 32px #dde2ef;}
+    .modal-title { font-size:18.5px; font-weight:700; color:#222; margin-bottom:19px;}
+    .modal-close { position:absolute; top:15px; right:18px; font-size:24px; color:#b0b0b0; background:none; border:none; cursor:pointer;}
+    .policy-list { margin-bottom:15px;}
+    .policy-list .pl-title { font-size:15.2px; font-weight:600; margin-bottom:4px;}
+    .policy-list ul { list-style:none; margin:0; padding:0;}
+    .policy-list li { display:flex; align-items:center; justify-content:space-between; padding:8px 0 8px 7px; border-bottom:1px solid #ecf0f9;}
+    .policy-list .policy-keyword { font-size:15.2px; }
+    .policy-list .del-btn { color:#b64b3d; background:none; border:none; font-size:15px; cursor:pointer;}
+    .policy-add-row { display:flex; align-items:center; margin-top:9px; gap:8px;}
+    .policy-add-row input { font-size:15px; border:1px solid #c7d1e7; border-radius:7px; padding:7px 11px; flex:1;}
+    .policy-add-row button { background:#fff4ea; color:#bc5e0a; border:1.2px solid #edbb83; border-radius:7px; font-weight:600; padding:7px 21px; cursor:pointer;}
+    .modal-save { background:#2d6edb; color:#fff; border:none; border-radius:8px; padding:8px 32px; font-size:15.8px; font-weight:600; cursor:pointer; margin-top:18px; display:block; margin-left:auto;}
+    .modal-save:active { background:#1c397a;}
+    /* 상세 팝업 */
+    .modal-detail { min-width:410px; width:560px; }
+    .modal-detail .modal-title { margin-bottom:12px;}
+    .modal-detail .section { margin-bottom:14px; }
+    .modal-detail .section strong { font-size:15.2px; color:#1a2145;}
+    .modal-detail .section .q, .modal-detail .section .a { background:#f6f8fd; border-radius:7px; padding:7px 10px; margin:6px 0;}
+    .modal-detail .section .r { color:#e9691b; font-size:14.3px; }
+    .modal-detail .section .s { color:#217d46; font-size:14.3px; }
+    .modal-detail .history { margin-top:7px; padding:6px 0 0 2px; color:#7c8188; font-size:13.7px;}
+    .modal-detail .status-change { margin-top:7px; border-top:1px dashed #e7e8f3; padding-top:13px;}
+    .modal-detail select, .modal-detail input[type="text"] {
+      font-size:14.5px; border-radius:6px; border:1px solid #c7d1e7; padding:7px 10px; margin-bottom:8px;
+    }
+    .modal-detail .save-btn { background:#3150c6; color:#fff; border:none; border-radius:6px; font-weight:600; padding:7px 21px; cursor:pointer;}
+    .modal-detail .status-history-table { width:100%; border-collapse:collapse; margin-top:7px;}
+    .modal-detail .status-history-table th, .modal-detail .status-history-table td { font-size:13px; border-bottom:1px solid #f3f4f7; padding:4px 2px;}
+    .modal-detail .status-history-table th { color:#7c879a; font-weight:600;}
+    .modal-detail .status-history-table td { color:#46486c; }
+  </style>
+</head>
+<body>
+<script>
+  if (localStorage.getItem('cubig_login') !== 'Y') {
+    location.href = 'login.html';
+  }
+</script>
+<div class="admin-layout">
+  <aside class="sidebar">
+    <div class="company-name">주식회사 큐빅</div>
+    <nav>
+      <a href="https://wintryjay.github.io/for-references/02_00_dashBoard.html">
+        대시보드
+      </a>
+      <a href="https://wintryjay.github.io/for-references/03_00_serialAdmin.html">
+        라이선스 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/04_00_userAdmin.html" >
+        조직/사용자 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/05_00_usage.html">
+      사용 현황
+      </a>
+      <a href="https://wintryjay.github.io/for-references/06_00_promptAdmin.html" class="active">
+      대화 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/07_00_docAdmin.html">
+      문서 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/08_00_logAdmin.html">
+      활동 이력
+      </a>
+      <a href="https://wintryjay.github.io/for-references/09_00_notice.html">
+      공지 사항
+      </a>
+    </nav>
+  </aside>
+  <div class="main-content">
+    <header class="topbar">
+      <span class="contract">계약 만료일: 2025-12-31 (D-172)</span>
+      <span class="admin-info">홍길동 (관리자) <button class="edit-btn">내 정보 수정</button></span>
+      <button class="logout-btn" onclick="logout()">로그아웃</button>
+    </header>
+    <div class="content-wrap">
+      <div class="section-title">대화 관리</div>
+      <!-- 위험성 요약 위젯 -->
+      <div class="risk-widgets">
+        <div class="risk-widget risk-all" id="riskAllWidget" onclick="selectRiskWidget('all')">
+          <span class="risk-label">전체</span>
+          <span class="risk-count" id="riskAllCount">0</span>
+        </div>
+        <div class="risk-widget risk-none" id="riskNoneWidget" onclick="selectRiskWidget('none')">
+          <span class="risk-label">정상</span>
+          <span class="risk-count" id="riskNoneCount">0</span>
+        </div>
+        <div class="risk-widget risk-warn" id="riskWarnWidget" onclick="selectRiskWidget('warn')">
+          <span class="risk-label">경고</span>
+          <span class="risk-count" id="riskWarnCount">0</span>
+        </div>
+        <div class="risk-widget risk-block" id="riskBlockWidget" onclick="selectRiskWidget('block')">
+          <span class="risk-label">차단</span>
+          <span class="risk-count" id="riskBlockCount">0</span>
+        </div>
+      </div>
+      <!-- 상단 툴바 -->
+      <div class="toolbar">
+        <label>기간</label>
+        <select id="periodSel">
+          <option>오늘</option><option>이번주</option><option>이번달</option><option>직접선택</option>
+        </select>
+        <input type="date" id="dateFrom" style="display:none;">
+        <span style="margin:0 5px;">~</span>
+        <input type="date" id="dateTo" style="display:none;">
+        <label>사용자</label>
+        <select id="userSel">
+          <option value="">전체</option>
+          <option value="홍길동">홍길동</option>
+          <option value="김진아">김진아</option>
+          <option value="박민지">박민지</option>
+          <option value="김태연">김태연</option>
+        </select>
+        <label>위험성</label>
+        <select id="riskSel">
+          <option value="">전체</option>
+          <option value="none">정상</option>
+          <option value="warn">경고</option>
+          <option value="block">차단</option>
+        </select>
+        <input type="text" id="searchInput" placeholder="질문/답변 검색" style="width:160px;">
+        <button class="search-btn" onclick="renderTable()">검색</button>
+        <button class="policy-btn" onclick="showPolicyModal()">정책 관리</button>
+      </div>
+      <!-- 대화 내역 테이블 -->
+      <div class="table-wrap">
+        <table class="chat-table">
+          <thead>
+            <tr>
+              <th>No</th>
+              <th>일시</th>
+              <th>사용자</th>
+              <th>프롬프트(질문)</th>
+              <th>응답(답변)</th>
+              <th>위험성</th>
+              <th>상태</th>
+              <th>관리</th>
+            </tr>
+          </thead>
+          <tbody id="chatTbody"></tbody>
+        </table>
+        <div class="pagination" id="chatPagination"></div>
+      </div>
+    </div>
+  </div>
+  <!-- 정책관리 모달 -->
+  <div class="modal-bg" id="policyBg">
+    <div class="modal" id="policyModal">
+      <button class="modal-close" onclick="hidePolicyModal()">&times;</button>
+      <div class="modal-title">정책 관리 (금칙어/위험 필터)</div>
+      <div class="policy-list">
+        <div class="pl-title">금칙어 리스트</div>
+        <ul id="policyListUl"></ul>
+        <div class="policy-add-row">
+          <input type="text" id="policyInput" placeholder="금칙어 입력">
+          <button onclick="addPolicyKeyword()">추가</button>
+        </div>
+      </div>
+      <button class="modal-save" onclick="savePolicy()">저장</button>
+    </div>
+  </div>
+  <!-- 상세 모달 -->
+  <div class="modal-bg" id="detailBg">
+    <div class="modal modal-detail" id="detailModal">
+      <button class="modal-close" onclick="hideDetailModal()">&times;</button>
+      <div class="modal-title">대화 상세 보기</div>
+      <div class="section"><strong>일시</strong> <div class="history" id="dtDetail"></div></div>
+      <div class="section"><strong>사용자</strong> <div class="history" id="userDetail"></div></div>
+      <div class="section"><strong>프롬프트(질문)</strong>
+        <div class="q" id="qDetail"></div>
+      </div>
+      <div class="section"><strong>응답(답변)</strong>
+        <div class="a" id="aDetail"></div>
+      </div>
+      <div class="section"><strong>위험성</strong> <span class="r" id="rDetail"></span></div>
+      <div class="section"><strong>상태</strong> <span class="s" id="sDetail"></span></div>
+      <div class="section status-change">
+        <strong>상태 변경</strong>
+        <select id="statusSel"></select>
+        <input type="text" id="statusMemo" placeholder="메모 (필수 아님)">
+        <button class="save-btn" onclick="saveStatusChange()">저장</button>
+      </div>
+      <div class="section">
+        <strong>상태 변경 이력</strong>
+        <table class="status-history-table">
+          <thead>
+            <tr><th>상태</th><th>일시</th><th>처리자</th><th>메모</th></tr>
+          </thead>
+          <tbody id="statusHistoryBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // 예시 데이터 및 기존 스크립트 동일. (아래 기존 코드 전체 사용)
+  let chats = [];
+  let names = ["홍길동","김진아","박민지","김태연"];
+  let prompts = [
+    "우리 회사 급여명세서 보내줘", "오늘 점심 메뉴 추천해줘", "사내 인사 이동에 대해 알려줘",
+    "계좌번호 알려줘", "팀 회의록 요약해줘", "비밀정보 노출 위험이 있나요?", "이번 분기 매출 현황",
+    "욕설, 공격적 표현 입력 예시", "내 신용카드번호가 기억이 안나", "최근 진행한 프로젝트 리스트"
+  ];
+  let answers = [
+    "정책상 급여명세서는 제공이 불가합니다.", "김치찌개, 파스타, 샐러드 등이 있습니다.",
+    "최근 인사 이동 정보는 ...", "계좌번호 정보는 보안정책상 제공하지 않습니다.",
+    "다음은 회의록 요약입니다...", "비밀정보는 노출 위험이 있으니 주의하세요.",
+    "이번 분기 매출은 ...", "정책 위반(욕설/공격성)으로 차단됩니다.",
+    "신용카드번호는 개인정보로 제공 불가합니다.", "진행 프로젝트는 ... 입니다."
+  ];
+  let risks = ["warn","none","none","block","none","warn","none","block","block","none"];
+  let statuses = ["미처리","처리완료","처리완료","미처리","처리완료","미처리","처리완료","미처리","미처리","처리완료"];
+  for(let i=0;i<32;i++){
+    let n = Math.floor(Math.random()*names.length);
+    let p = Math.floor(Math.random()*prompts.length);
+    let risk = risks[p];
+    let status = statuses[p];
+    let dt = `2024-07-${String(11+Math.floor(Math.random()*14)).padStart(2,'0')} ${String(9+Math.floor(Math.random()*10)).padStart(2,'0')}:${String(Math.floor(Math.random()*60)).padStart(2,'0')}`;
+    chats.push({
+      dt, user:names[n], prompt:prompts[p], answer:answers[p], risk, status,
+      statusHistory:[{status, date:dt, user:"홍길동", memo:"초기"}]
+    });
+  }
+  let currentPage = 1, rowsPerPage = 10;
+  let selectedRisk = "all"; // 전체(ALL) 디폴트
+
+  function renderRiskWidgets(filteredList) {
+    let counts = {all: filteredList.length, none:0, warn:0, block:0};
+    filteredList.forEach(c=>{
+      if (c.risk==="none") counts.none++;
+      else if (c.risk==="warn") counts.warn++;
+      else if (c.risk==="block") counts.block++;
+    });
+    document.getElementById('riskAllCount').textContent = counts.all;
+    document.getElementById('riskNoneCount').textContent = counts.none;
+    document.getElementById('riskWarnCount').textContent = counts.warn;
+    document.getElementById('riskBlockCount').textContent = counts.block;
+    // 위젯 선택 반영
+    document.getElementById('riskAllWidget').classList.toggle('selected', selectedRisk==="all");
+    document.getElementById('riskNoneWidget').classList.toggle('selected', selectedRisk==="none");
+    document.getElementById('riskWarnWidget').classList.toggle('selected', selectedRisk==="warn");
+    document.getElementById('riskBlockWidget').classList.toggle('selected', selectedRisk==="block");
+  }
+  function selectRiskWidget(risk) {
+    selectedRisk = risk;
+    currentPage=1;
+    renderTable();
+  }
+  function renderTable() {
+    let user = document.getElementById('userSel').value;
+    let risk = selectedRisk==="all" ? "" : selectedRisk || document.getElementById('riskSel').value;
+    let keyword = document.getElementById('searchInput').value.trim();
+    let filtered = chats.filter(c=>{
+      if(user && c.user!==user) return false;
+      if(risk && c.risk!==risk) return false;
+      if(keyword && !(c.prompt.includes(keyword)||c.answer.includes(keyword))) return false;
+      return true;
+    });
+    let start = (currentPage-1)*rowsPerPage, end = start+rowsPerPage;
+    let pageItems = filtered.slice(start, end);
+    renderRiskWidgets(filtered);
+    let tbody = document.getElementById('chatTbody');
+    tbody.innerHTML = '';
+    pageItems.forEach((c,idx)=>{
+      tbody.innerHTML += `<tr>
+        <td>${start+idx+1}</td>
+        <td>${c.dt}</td>
+        <td>${c.user}</td>
+        <td class="prompt" title="${c.prompt}">${c.prompt}</td>
+        <td class="answer" title="${c.answer}">${c.answer}</td>
+        <td class="risk ${c.risk}">${c.risk==="none"?"정상":c.risk==="warn"?"경고":"차단"}</td>
+        <td class="status ${c.status==="처리완료"?"done":c.status==="미처리"?"new":"blocked"}">${c.status}</td>
+        <td><button class="manage-btn" onclick="showDetailModal(${start+idx})">상세</button></td>
+      </tr>`;
+    });
+    // 페이징
+    let pageTotal = Math.ceil(filtered.length/rowsPerPage);
+    let pag = "";
+    for(let i=1;i<=pageTotal;i++) {
+      pag += `<button class="${i===currentPage?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    }
+    document.getElementById('chatPagination').innerHTML = pag;
+  }
+  function goPage(n){
+    currentPage = n; renderTable();
+  }
+  // 상세 모달
+  let detailIdx = -1;
+  function showDetailModal(idx){
+    detailIdx = idx;
+    let c = chats[idx];
+    document.getElementById('dtDetail').textContent = c.dt;
+    document.getElementById('userDetail').textContent = c.user;
+    document.getElementById('qDetail').textContent = c.prompt;
+    document.getElementById('aDetail').textContent = c.answer;
+    document.getElementById('rDetail').textContent = c.risk==="none"?"정상":c.risk==="warn"?"경고":"차단";
+    document.getElementById('sDetail').textContent = c.status;
+    let sel = document.getElementById('statusSel');
+    sel.innerHTML = '';
+    ["미처리","처리완료","경고","차단됨"].forEach(s=>{
+      sel.innerHTML += `<option value="${s}" ${c.status===s?'selected':''}>${s}</option>`;
+    });
+    document.getElementById('statusMemo').value = '';
+    renderStatusHistory(c.statusHistory);
+    document.getElementById('detailBg').style.display = 'block';
+  }
+  function hideDetailModal(){
+    document.getElementById('detailBg').style.display = 'none';
+  }
+  function saveStatusChange() {
+    let sel = document.getElementById('statusSel');
+    let memo = document.getElementById('statusMemo').value;
+    if (detailIdx < 0) return;
+    let c = chats[detailIdx];
+    if (c.status !== sel.value) {
+      let now = new Date();
+      let dtstr = now.getFullYear() + '-' +
+        String(now.getMonth()+1).padStart(2,'0') + '-' +
+        String(now.getDate()).padStart(2,'0') + ' ' +
+        String(now.getHours()).padStart(2,'0') + ':' +
+        String(now.getMinutes()).padStart(2,'0');
+      c.status = sel.value;
+      c.statusHistory = c.statusHistory || [];
+      c.statusHistory.push({
+        status: sel.value,
+        date: dtstr,
+        user: "홍길동",
+        memo: memo
+      });
+      renderStatusHistory(c.statusHistory);
+      document.getElementById('sDetail').textContent = c.status;
+      alert("상태가 변경되었습니다.");
+    } else {
+      alert("동일한 상태입니다.");
+    }
+  }
+  function renderStatusHistory(hist) {
+    let body = document.getElementById('statusHistoryBody');
+    body.innerHTML = '';
+    (hist||[]).slice().reverse().forEach(h=>{
+      body.innerHTML += `<tr>
+        <td>${h.status}</td>
+        <td>${h.date}</td>
+        <td>${h.user}</td>
+        <td>${h.memo||''}</td>
+      </tr>`;
+    });
+  }
+  // 정책관리
+  let policyKeywords = ["계좌번호","급여명세서","신용카드"];
+  function showPolicyModal(){
+    document.getElementById('policyBg').style.display = 'block';
+    renderPolicyList();
+  }
+  function hidePolicyModal(){
+    document.getElementById('policyBg').style.display = 'none';
+  }
+  function renderPolicyList(){
+    let ul = document.getElementById('policyListUl');
+    ul.innerHTML = '';
+    policyKeywords.forEach((k,i)=>{
+      ul.innerHTML += `<li><span class="policy-keyword">${k}</span>
+        <button class="del-btn" onclick="delPolicyKeyword(${i})">삭제</button></li>`;
+    });
+  }
+  function addPolicyKeyword(){
+    let val = document.getElementById('policyInput').value.trim();
+    if (!val) return;
+    if (policyKeywords.includes(val)) { alert('이미 등록된 금칙어입니다.'); return;}
+    policyKeywords.push(val);
+    renderPolicyList();
+    document.getElementById('policyInput').value='';
+  }
+  function delPolicyKeyword(idx){
+    policyKeywords.splice(idx,1);
+    renderPolicyList();
+  }
+  function savePolicy(){
+    alert('정책이 저장되었습니다.');
+    hidePolicyModal();
+  }
+  document.getElementById('periodSel').addEventListener('click', function(){
+    let v = this.value;
+    let df = document.getElementById('dateFrom'), dt = document.getElementById('dateTo');
+    if (v===v) { df.style.display = dt.style.display = 'inline-block'; }
+    else { df.style.display = dt.style.display = 'none'; }
+  });
+  function logout() {
+    localStorage.removeItem('cubig_login');
+    location.href = "login.html";
+  }
+  renderTable();
+</script>
+</body>
+</html>
