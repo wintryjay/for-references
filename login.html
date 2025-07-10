@@ -275,13 +275,13 @@
       <div class="login-msg" id="loginMsg"></div>
       
       <div class="form-group">
-        <label class="login-label" for="email">ttest@cubig.ai</label>
-        <input class="login-input" id="email" type="email" required placeholder="이메일을 입력해 주세요">
+        <label class="login-label" for="email">이메일(회사계정)</label>
+        <input class="login-input" id="email" type="email" required placeholder="이메일을 입력해주세요.">
       </div>
       
       <div class="form-group">
-        <label class="login-label" for="pw">ttest</label>
-        <input class="login-input" id="pw" type="password" required placeholder="비밀번호를 입력해 주세요">
+        <label class="login-label" for="pw">비밀번호</label>
+        <input class="login-input" id="pw" type="password" required placeholder="비밀번호를 입력해주세요.">
       </div>
       
       <button class="login-btn" type="submit" id="loginBtn">
@@ -292,6 +292,9 @@
   </div>
   
   <script>
+    // 아이디/비번 입력해놓기
+    document.getElementById("email").value = "ttest@cubig.ai";
+    document.getElementById("password").value = "ttest@cubig.ai";
     // 로그인 인증 처리 (아이디/비번 하드코딩)
     const LOGIN_ID = "ttest@cubig.ai";
     const LOGIN_PW = "ttest";
@@ -300,7 +303,8 @@
       const msg = document.getElementById('loginMsg');
       msg.textContent = text;
       msg.className = isSuccess ? 'login-msg login-success show' : 'login-msg show';
-      
+
+    
       // 3초 후 메시지 숨기기
       setTimeout(() => {
         msg.classList.remove('show');
