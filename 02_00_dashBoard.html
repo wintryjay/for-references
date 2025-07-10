@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>고객사 어드민 대시보드</title>
+  <meta name="viewport" content="width=1100, initial-scale=1">
+  <style>
+    body { margin:0; background:#f8fafd; font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; }
+    .admin-layout { display: flex; height: 100vh; }
+    .sidebar { width: 210px; background: #212b42; display: flex; flex-direction: column; color:#fff; min-width:52px; position:relative;}
+    .company-name {
+      font-size:18.5px; font-weight:600; letter-spacing:-1.1px;
+      height:65px; display:flex; align-items:center;
+      padding:0 24px; border-bottom:1px solid #344063;
+      margin-bottom:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .sidebar ul { list-style:none; padding:0 10px; margin:0; }
+    .sidebar ul li { padding:13px 20px; font-size:15.5px; color:#e1e6f0; border-radius:6px; cursor:pointer; margin-bottom:4px; transition:.15s;}
+    .sidebar ul li.active, .sidebar ul li:hover { background:#2c3b5c; color:#fff; }
+    .main-content { flex:1; display:flex; flex-direction:column; }
+    .topbar {
+      background:#fff; height:65px;
+      display:flex; align-items:center; justify-content:flex-end;
+      padding:0 35px 0 0; border-bottom:1px solid #e5e8ef; gap:27px;
+      box-sizing:border-box;
+    }
+    .contract { color:#2b63bf; font-size:15.5px; font-weight:600; }
+    .admin-info { color:#333; font-size:15.3px; }
+    .edit-btn { font-size:12.5px; margin-left:7px; background:#f4f7fe; border:none; border-radius:5px; padding:2.5px 9px; cursor:pointer; color:#4461b1;}
+    .logout-btn { font-size:14.3px; background:#3a4b7b; color:#fff; border:none; border-radius:7px; padding:7px 18px; font-weight:600; cursor:pointer; margin-left:12px;}
+    .dashboard-wrap { padding:32px 38px 0 38px; }
+    .widget-row { display: flex; gap:24px; margin-bottom:29px; }
+    .widget {
+      flex:1; background:#fff; border-radius:11px; box-shadow:0 1px 8px #ebedf1;
+      padding:25px 22px 20px 30px; min-width:170px; min-height:95px;
+      display: flex; flex-direction: column; justify-content: center;
+      transition:.17s; border:1.6px solid transparent;
+    }
+    .widget-link { cursor:pointer; box-shadow:0 1px 8px #e0e3ee; transition:.17s;}
+    .widget-link:hover, .widget-link:focus {
+      border:1.6px solid #5d6cc1; box-shadow:0 4px 12px #d6dcfa; outline:none;
+    }
+    .widget-title { font-size:15.5px; color:#344063; margin-bottom:7px;}
+    .widget-value { font-size:28px; font-weight:bold; margin-bottom:7px;}
+    .widget-note { font-size:13px; color:#b1b6c3; }
+    .dashboard-section { background:#fff; border-radius:11px; box-shadow:0 1px 8px #ebedf1; margin-bottom:24px; padding:23px 26px 15px 26px; }
+    .section-header { font-size:17.2px; font-weight:600; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;}
+    .section-list { list-style:none; margin:0; padding:0;}
+    .section-list li {
+      padding:7px 0; font-size:15px; color:#283560; cursor:pointer; transition:.14s;
+      border-radius:6px; padding-left:12px; margin-bottom:2px;
+    }
+    .section-list li.critical { color:#d53636; font-weight:600;}
+    .section-list li:hover, .section-list li:focus {
+      background:#f1f4fb; color:#3258b2; outline:none;
+    }
+    .dashboard-table { width:100%; border-collapse:collapse; margin-top:6px;}
+    .dashboard-table th, .dashboard-table td { border-bottom:1px solid #e8ebf1; padding:8px 8px; font-size:14.7px; text-align:left;}
+    .dashboard-table th { color:#46507d; background:#f6f8fd;}
+    .log-detail-btn { cursor:pointer; color:#4063e5; text-decoration:underline; font-size:14px; border:none; background:none; padding:0;}
+    .recent-activity-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 7px;
+    }
+    .activity-all-btn {
+      font-size: 13px;
+      padding: 3px 13px;
+      border: none;
+      border-radius: 6px;
+      background: #eaf1ff;
+      color: #2c3b5c;
+      cursor: pointer;
+      font-weight: 500;
+    }
+    /* 모달 */
+    .modal-bg {
+      display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:1000;
+      background:rgba(35,38,53,.18);
+      justify-content:center; align-items:center;
+    }
+    .modal-bg.active { display:flex; }
+    .modal-content {
+      background:#fff; min-width:390px; max-width:90vw; border-radius:13px;
+      padding:32px 28px 24px 32px; box-shadow:0 4px 24px #33343b2c;
+      position:relative;
+      animation:modalin .22s;
+    }
+    @keyframes modalin { from {transform:translateY(32px) scale(.96); opacity:0;} to{transform:none;opacity:1;} }
+    .modal-title { font-size:18px; font-weight:700; color:#263b63; margin-bottom:15px;}
+    .modal-info { font-size:15.2px; color:#9fa5b6; margin-bottom:13px;}
+    .modal-detail { font-size:15.6px; color:#252b35; margin-bottom:18px; white-space:pre-line;}
+    .modal-close { position:absolute; top:16px; right:18px; background:none; border:none; font-size:23px; color:#b1b5c2; cursor:pointer;}
+  </style>
+</head>
+<body>
+  <script>
+    if (localStorage.getItem('cubig_login') !== 'Y') {
+      location.href = 'login.html';
+    }
+  </script>
+  <div class="admin-layout">
+    <!-- 좌측 메뉴 -->
+    <nav class="sidebar">
+      <div class="company-name">큐빅 주식회사</div>
+      <ul>
+        <li href="https://wintryjay.github.io/for-references/02_00_dashBoard.html" class="active">대시보드</li>
+        <li href="https://wintryjay.github.io/for-references/03_00_serialAdmin.html">라이선스 관리</li>
+        <li href="https://wintryjay.github.io/for-references/04_00_userAdmin.html">조직/사용자 관리</li>
+        <li href="https://wintryjay.github.io/for-references/05_00_usage.html">사용 현황</li>
+        <li href="https://wintryjay.github.io/for-references/06_00_promptAdmin.html">대화 관리</li>
+        <li href="https://wintryjay.github.io/for-references/07_00_docAdmin.html">문서 관리</li>
+        <li href="https://wintryjay.github.io/for-references/08_00_logAdmin.html">활동 이력</li>
+        <li href="https://wintryjay.github.io/for-references/09_00_notice.html">공지 사항</li>
+      </ul>
+    </nav>
+    <div class="main-content">
+      <header class="topbar">
+        <span class="contract">계약 만료일: 2025-12-31 (D-172)</span>
+        <span class="admin-info">홍길동 (관리자) <button class="edit-btn">내 정보 수정</button></span>
+        <button class="logout-btn" onclick="logout()">로그아웃</button>
+      </header>
+      <div class="dashboard-wrap">
+        <!-- 공지/알림/경보 -->
+        <div class="dashboard-section">
+          <div class="section-header">공지 / 알림 / 경보 <button style="font-size:13px; padding:3px 10px; border:none; border-radius:5px; background:#f6f8fd; color:#2c3b5c; cursor:pointer;">전체보기</button></div>
+          <ul class="section-list" id="noticeList"></ul>
+        </div>
+        <!-- 주요 현황 위젯 -->
+        <div class="widget-row">
+          <div class="widget widget-link" tabindex="0" onclick="gotoPage('usage')" title="사용 현황으로 이동">
+            <div class="widget-title">토큰 사용량</div>
+            <div class="widget-value" id="tokenUsage">1,234,567</div>
+            <div class="widget-note">금월 누적 (입력+출력)</div>
+          </div>
+          <div class="widget widget-link" tabindex="0" onclick="gotoPage('cost')" title="사용 현황으로 이동">
+            <div class="widget-title">월 이용 금액</div>
+            <div class="widget-value" id="monthlyCost">1,850,000원</div>
+            <div class="widget-note">예상 청구액 (실시간 집계)</div>
+          </div>
+          <div class="widget widget-link" tabindex="0" onclick="gotoPage('user')" title="조직/사용자 관리로 이동">
+            <div class="widget-title">사용자 현황</div>
+            <div class="widget-value" id="userCount">92</div>
+            <div class="widget-note">전체 / 활성 사용자</div>
+          </div>
+          <div class="widget widget-link" tabindex="0" onclick="gotoPage('serial')" title="시리얼(라이선스) 관리로 이동">
+            <div class="widget-title">시리얼(라이선스) 현황</div>
+            <div class="widget-value" id="serialStatus">110/99</div>
+            <div class="widget-note">전체 / 사용중</div>
+          </div>
+        </div>
+        <div class="widget-row">
+          <div class="widget widget-link" tabindex="0" onclick="gotoPage('chat')" title="대화 관리로 이동">
+            <div class="widget-title">대화 정상</div>
+            <div class="widget-value" id="chatNormalCount">186</div>
+            <div class="widget-note">이상 없음</div>
+          </div>
+          <div class="widget widget-link" tabindex="0" onclick="gotoPage('chat')" title="대화 관리로 이동">
+            <div class="widget-title">대화 경고</div>
+            <div class="widget-value" id="chatWarningCount">4</div>
+            <div class="widget-note">주의 필요</div>
+          </div>
+          <div class="widget widget-link" tabindex="0" onclick="gotoPage('chat')" title="대화 관리로 이동">
+            <div class="widget-title">대화 차단</div>
+            <div class="widget-value" id="chatBlockedCount">1</div>
+            <div class="widget-note">관리 조치</div>
+          </div>
+          <div class="widget widget-link" tabindex="0" onclick="gotoPage('doc')" title="문서 관리로 이동">
+            <div class="widget-title">문서 현황</div>
+            <div class="widget-value" id="docStatus">386</div>
+            <div class="widget-note">전체 업로드 문서</div>
+          </div>
+        </div>
+        <div class="widget-row">
+          <div class="widget" style="flex:2;">
+            <div class="recent-activity-header">
+              <div class="widget-title">최근 활동 이력</div>
+              <button class="activity-all-btn" onclick="gotoActivityLog()">전체보기</button>
+            </div>
+            <table class="dashboard-table" id="activityTable">
+              <thead>
+                <tr><th>일시</th><th>유형</th><th>내용</th><th style="width:72px;">상세</th></tr>
+              </thead>
+              <tbody id="recentActivity"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- 공지/알림 상세 모달 -->
+      <div class="modal-bg" id="noticeModal">
+        <div class="modal-content">
+          <button class="modal-close" onclick="closeNoticeModal()" title="닫기">&times;</button>
+          <div class="modal-title" id="modalNoticeTitle"></div>
+          <div class="modal-info" id="modalNoticeInfo"></div>
+          <div class="modal-detail" id="modalNoticeDetail"></div>
+        </div>
+      </div>
+      <!-- 활동 이력 상세 모달 -->
+      <div class="modal-bg" id="logModal">
+        <div class="modal-content">
+          <button class="modal-close" onclick="closeLogModal()" title="닫기">&times;</button>
+          <div class="modal-title" id="logModalTitle"></div>
+          <div class="modal-info" id="logModalInfo"></div>
+          <div class="modal-detail" id="logModalDetail"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    if (localStorage.getItem('cubig_login') !== 'Y') {
+      location.href = 'login.html';
+    }
+    function logout() {
+      localStorage.removeItem('cubig_login');
+      location.href = 'login.html';
+    }
+    function gotoPage(page) {
+      switch(page) {
+        case 'usage': location.href = 'usage.html'; break;
+        case 'cost': location.href = 'usage.html#cost'; break;
+        case 'user': location.href = 'useradmin.html'; break;
+        case 'serial': location.href = 'serialadmin.html'; break;
+        case 'doc': location.href = 'docadmin.html'; break;
+        default: break;
+      }
+    }
+    // 공지/알림/경보 데이터 예시
+    const notices = [
+      {
+        type: '경보', title: '비정상 토큰 사용 감지',
+        date: '2025-07-10 10:31',
+        detail: '오늘 2건의 비정상적인 토큰 사용이 탐지되었습니다.\n해당 사용자를 확인해 주세요.',
+        critical: true
+      },
+      {
+        type: '공지', title: '시스템 점검 안내',
+        date: '2025-07-20 08:00',
+        detail: '7월 20일(토) 08:00~09:00 LLM Capsule 시스템 점검이 예정되어 있습니다.\n작업 시간 중 서비스 이용이 원활하지 않을 수 있습니다.',
+        critical: false
+      },
+      {
+        type: '만료예정', title: '시리얼 만료 임박',
+        date: '2025-07-11 00:00',
+        detail: '3건의 시리얼(라이선스)이 7일 이내 만료 예정입니다.\n라이선스 관리에서 확인 후 조치 바랍니다.',
+        critical: false
+      }
+    ];
+    function renderNotices() {
+      const ul = document.getElementById('noticeList');
+      ul.innerHTML = '';
+      notices.forEach((n, i) => {
+        const li = document.createElement('li');
+        if(n.critical) li.classList.add('critical');
+        li.tabIndex = 0;
+        li.setAttribute('onclick', `openNoticeModal(${i})`);
+        li.setAttribute('onkeypress', `if(event.key==='Enter'){openNoticeModal(${i})}`);
+        li.innerHTML = `[${n.type}] ${n.title}`;
+        ul.appendChild(li);
+      });
+    }
+    function openNoticeModal(idx) {
+      const n = notices[idx];
+      document.getElementById('modalNoticeTitle').textContent = `[${n.type}] ${n.title}`;
+      document.getElementById('modalNoticeInfo').textContent = n.date;
+      document.getElementById('modalNoticeDetail').textContent = n.detail;
+      document.getElementById('noticeModal').classList.add('active');
+      setTimeout(()=>{document.getElementById('noticeModal').querySelector('.modal-content').focus()},10);
+    }
+    function closeNoticeModal() {
+      document.getElementById('noticeModal').classList.remove('active');
+    }
+    // 활동 이력 데이터 예시
+    const logs = [
+      {
+        time: "2025-07-10 15:09",
+        type: "사용자 추가",
+        content: "홍길동(개발팀) 신규 등록",
+        detail: "실행자: admin@cubig.ai\nIP: 192.168.1.2\n브라우저: Chrome 125\n상세: 신규 계정 등록(개발팀)"
+      },
+      {
+        time: "2025-07-10 14:57",
+        type: "문서 업로드",
+        content: "RAG_가이드.pdf",
+        detail: "실행자: 홍길동\nIP: 192.168.1.13\n브라우저: Chrome 125\n파일: RAG_가이드.pdf"
+      },
+      {
+        time: "2025-07-10 12:34",
+        type: "시리얼 만료",
+        content: "시리얼 0024-****-**** 만료 처리",
+        detail: "실행자: 시스템\n시리얼번호: 0024-xxxx-xxxx\n만료일: 2025-07-10"
+      },
+      {
+        time: "2025-07-10 09:11",
+        type: "공지 등록",
+        content: "시스템 점검 안내 등록",
+        detail: "실행자: 관리자\n공지 제목: 시스템 점검 안내\n등록일: 2025-07-10"
+      },
+      {
+        time: "2025-07-09 17:42",
+        type: "문서 삭제",
+        content: "2024_사내_지침.pdf 삭제",
+        detail: "실행자: 박민지\nIP: 192.168.1.19\n파일: 2024_사내_지침.pdf"
+      }
+    ];
+    function renderLogs() {
+      const tbody = document.getElementById('recentActivity');
+      tbody.innerHTML = '';
+      logs.forEach((log, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${log.time}</td>
+          <td>${log.type}</td>
+          <td>${log.content}</td>
+          <td><button class="log-detail-btn" onclick="openLogModal(${i});event.stopPropagation();">상세</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    function openLogModal(idx) {
+      const log = logs[idx];
+      document.getElementById('logModalTitle').textContent = log.type;
+      document.getElementById('logModalInfo').textContent = log.time;
+      document.getElementById('logModalDetail').textContent = log.detail;
+      document.getElementById('logModal').classList.add('active');
+      setTimeout(()=>{document.getElementById('logModal').querySelector('.modal-content').focus()},10);
+    }
+    function closeLogModal() {
+      document.getElementById('logModal').classList.remove('active');
+    }
+    function gotoActivityLog() {
+      // 실제 전체 이력 페이지로 이동하는 코드
+      location.href = "activitylog.html";
+    }
+    // 초기화
+    renderNotices();
+    renderLogs();
+  </script>
+</body>
+</html>
