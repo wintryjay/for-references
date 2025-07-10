@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>고객사 어드민: 조직/사용자 관리</title>
+  <meta name="viewport" content="width=1200">
+  <style>
+    body { margin:0; background:#f8fafd; font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; }
+    .admin-layout { display: flex; height: 100vh; }
+    .sidebar { width: 210px; background: #212b42; display: flex; flex-direction: column; color:#fff; min-width:52px; }
+    .company-name { font-size:18.5px; font-weight:600; height:65px; display:flex; align-items:center; padding:0 24px; border-bottom:1px solid #344063;}
+    .sidebar nav { 
+      width: 100%; 
+    }
+    .sidebar nav a {
+      display: block; 
+      padding: 16px 32px; 
+      color: rgba(255,255,255,0.9); 
+      text-decoration: none;
+      font-size: 16px; 
+      font-weight: 500;
+      border-left: 4px solid transparent; 
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .sidebar nav a:hover,
+    .sidebar nav a.active { 
+      background: rgba(255,255,255,0.15);
+      border-left: 4px solid #ffffff; 
+      color: #ffffff;
+    }
+    .main-content { flex:1; display:flex; flex-direction:column; }
+    .topbar { background:#fff; height:65px; display:flex; align-items:center; justify-content:flex-end; padding:0 35px 0 0; border-bottom:1px solid #e5e8ef; gap:27px;}
+    .contract { color:#2b63bf; font-size:15.5px; font-weight:600; }
+    .admin-info { color:#333; font-size:15.3px; }
+    .edit-btn { font-size:12.5px; margin-left:7px; background:#f4f7fe; border:none; border-radius:5px; padding:2.5px 9px; cursor:pointer; color:#4461b1;}
+    .logout-btn { font-size:14.3px; background:#3a4b7b; color:#fff; border:none; border-radius:7px; padding:7px 18px; font-weight:600; cursor:pointer; margin-left:12px;}
+    .content-wrap { padding:32px 38px 0 38px; }
+    .section-title { font-size:22px; font-weight:700; color:#25304e; margin-bottom:24px;}
+    .status-widget-bar { display:flex; gap:19px; margin-bottom:30px;}
+    .status-widget { flex:1; background:#fff; border-radius:9px; box-shadow:0 1px 8px #ebedf1; padding:18px 0 16px 0; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; border:2px solid #fff; transition:.18s;}
+    .status-widget.selected { border:2.5px solid #365bd4; box-shadow:0 4px 18px #dbe3f6; }
+    .status-widget .w-title { font-size:15.7px; font-weight:500; color:#4a5a84; margin-bottom:7px;}
+    .status-widget .w-count { font-size:22px; font-weight:700; color:#274dc1;}
+    .user-admin-flex { display:flex; gap:30px; min-height:580px;}
+    .org-panel { 
+      width:240px; background:#fff; border-radius:11px; box-shadow:0 1px 8px #ebedf1; 
+      padding:23px 21px 18px 24px; font-size:15.2px; transition: width 0.22s cubic-bezier(.6,.19,.41,.89); 
+      min-width:44px; position:relative;
+      overflow:hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .org-panel.closed {
+      width: 44px;
+      padding: 23px 4px 18px 4px;
+      align-items: center;
+    }
+    .org-title-bar {
+      display:flex; align-items:center; justify-content:space-between; width:100%;
+      margin-bottom:16px;
+    }
+    .org-title { font-size:17.5px; font-weight:600; color:#294782;}
+    .org-panel.closed .org-title { display:none; }
+    .org-panel.closed .org-list { display:none; }
+    .org-toggle-btn {
+      background: none; border: none; cursor:pointer; font-size:17px; color:#36417b;
+      margin-left: auto; padding:2px 3px;
+      transition:.12s;
+      min-width:30px;
+    }
+    .org-list { list-style:none; padding:0; margin:0; width:100%; }
+    .org-item { margin-bottom:12px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;}
+    .org-item.selected { font-weight:700; color:#2259c1;}
+    .org-badge { background:#e9eefa; color:#2259c1; font-size:13.5px; border-radius:10px; padding:2.5px 10px; margin-left:11px; min-width:23px; text-align:center;}
+    .user-table-wrap { background:#fff; border-radius:11px; box-shadow:0 1px 8px #ebedf1; padding:30px 28px 30px 28px; flex:1; display:flex; flex-direction:column; }
+    .table-topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+    .filter-bar { display:flex; gap:11px; align-items:center; }
+    .filter-bar input, .filter-bar select { border:1px solid #c7d1e7; border-radius:6px; padding:6px 12px; font-size:15px; }
+    .add-user-btn { background:#3464c4; color:#fff; border:none; border-radius:7px; padding:7px 17px; font-size:15px; font-weight:600; cursor:pointer;}
+    .user-table { width:100%; border-collapse:collapse; margin-top:7px;}
+    .user-table th, .user-table td { border-bottom:1px solid #e8ebf1; padding:8px 7px; font-size:14.7px; text-align:center;}
+    .user-table th { color:#46507d; background:#f6f8fd;}
+    .user-table td { background:#fff; }
+    .user-link { color:#222; text-decoration:underline; cursor:pointer; }
+    .user-link:hover { color:#3156bc;}
+    .manage-btn { font-size:13.5px; padding:3px 13px; border:none; border-radius:6px; background:#f3f6fc; color:#3556b2; cursor:pointer; }
+    .modal-bg { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:1000; background:rgba(35,38,53,.16); justify-content:center; align-items:center;}
+    .modal-bg.active { display:flex; }
+    .modal-content { background:#fff; min-width:350px; max-width:94vw; border-radius:13px; padding:34px 28px 34px 32px; box-shadow:0 4px 24px #33343b2c; position:relative;}
+    .modal-title { font-size:17.7px; font-weight:700; color:#263b63; margin-bottom:13px;}
+    .modal-close { position:absolute; top:12px; right:14px; background:none; border:none; font-size:23px; color:#b1b5c2; cursor:pointer;}
+    .modal-detail { font-size:15.3px; margin-bottom:28px; }
+    .modal-btn-bar { text-align:center; }
+    .modal-btn-bar button { margin:0 10px; padding:8px 24px; font-size:16px; border:none; border-radius:7px; background:#4461b1; color:#fff; cursor:pointer;}
+    .modal-btn-bar .cancel { background:#b2bedf; color:#fff;}
+    .modal-btn-bar .delete { background:#c24545; color:#fff;}
+    /* 수정 모드 입력폼 */
+    .modal-edit-form input, .modal-edit-form select {
+      margin: 7px 9px 7px 0; font-size:15px; padding:6px 10px; border:1px solid #c7d1e7; border-radius:5px; min-width:90px;
+    }
+    .modal-edit-form input[readonly] { background:#f5f5f9; color:#aaa; }
+  </style>
+</head>
+<body>
+<script>
+  if (localStorage.getItem('cubig_login') !== 'Y') {
+    location.href = 'login.html';
+  }
+</script>
+<div class="admin-layout">
+  <!-- 사이드바(좌측 메뉴) -->
+  <aside class="sidebar">
+    <div class="company-name">주식회사 큐빅</div>
+    <nav>
+      <a href="https://wintryjay.github.io/for-references/02_00_dashBoard.html">
+        대시보드
+      </a>
+      <a href="https://wintryjay.github.io/for-references/03_00_serialAdmin.html">
+        라이선스 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/04_00_userAdmin.html" class="active">
+        조직/사용자 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/05_00_usage.html">
+      사용 현황
+      </a>
+      <a href="https://wintryjay.github.io/for-references/06_00_promptAdmin.html">
+      대화 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/07_00_docAdmin.html">
+      문서 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/08_00_logAdmin.html">
+      활동 이력
+      </a>
+      <a href="https://wintryjay.github.io/for-references/09_00_notice.html">
+      공지 사항
+      </a>
+    </nav>
+  </aside>
+  <div class="main-content">
+    <header class="topbar">
+      <span class="contract">계약 만료일: 2025-12-31 (D-172)</span>
+      <span class="admin-info">홍길동 (관리자) <button class="edit-btn">내 정보 수정</button></span>
+      <button class="logout-btn" onclick="logout()">로그아웃</button>
+    </header>
+    <div class="content-wrap">
+      <div class="section-title">조직/사용자 관리</div>
+      <!-- 상태 위젯 바 -->
+      <div class="status-widget-bar" id="statusWidgetBar"></div>
+      <div class="user-admin-flex">
+        <!-- 왼쪽: 조직/부서 패널 -->
+        <aside class="org-panel" id="orgPanel">
+          <div class="org-title-bar">
+            <span class="org-title">조직/부서</span>
+            <button class="org-toggle-btn" id="orgToggleBtn" onclick="toggleOrgPanel()" title="패널 닫기">&#10094;</button>
+          </div>
+          <ul class="org-list" id="orgList"></ul>
+        </aside>
+        <!-- 중앙: 사용자 목록 -->
+        <div class="user-table-wrap">
+          <div class="table-topbar">
+            <div class="filter-bar">
+              <input type="text" id="searchInput" placeholder="이름, 이메일, 부서명 검색" oninput="renderUserTable()">
+              <select id="gradeFilter" onchange="renderUserTable()">
+                <option value="">등급 전체</option>
+                <option>관리자</option>
+                <option>일반</option>
+                <option>외부</option>
+              </select>
+              <select id="statusFilter" onchange="renderUserTable()">
+                <option value="">상태 전체</option>
+                <option>활성</option>
+                <option>비활성</option>
+              </select>
+            </div>
+            <button class="add-user-btn" onclick="openUserModal('add')">+ 사용자 추가</button>
+          </div>
+          <table class="user-table">
+            <thead>
+              <tr>
+                <th style="width:70px;">이름</th>
+                <th style="width:170px;">이메일</th>
+                <th style="width:100px;">조직/부서</th>
+                <th style="width:80px;">직급</th>
+                <th style="width:80px;">등급</th>
+                <th style="width:75px;">상태</th>
+                <th style="width:98px;">등록일</th>
+                <th style="width:95px;">관리</th>
+              </tr>
+            </thead>
+            <tbody id="userTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <!-- 사용자 상세/수정 팝업 -->
+    <div class="modal-bg" id="userModal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closeUserModal()">&times;</button>
+        <div id="userModalInner"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  if (localStorage.getItem('cubig_login') !== 'Y') {
+    location.href = 'login.html';
+  }
+  function logout() {
+    localStorage.removeItem('cubig_login');
+    location.href = 'login.html';
+  }
+  // 조직/부서 데이터
+  const orgListData = [
+    { id: 1, name: "전체", count: 6 },
+    { id: 2, name: "개발팀", count: 3 },
+    { id: 3, name: "경영지원", count: 1 },
+    { id: 4, name: "마케팅", count: 1 },
+    { id: 5, name: "IT운영", count: 1 }
+  ];
+  // 사용자 데이터
+  let userList = [
+    { name: "홍길동", email: "hong@cubig.ai", dept: "개발팀", position: "책임", grade: "관리자", state: "활성", reg: "2024-04-01" },
+    { name: "김진아", email: "jina@cubig.ai", dept: "개발팀", position: "선임", grade: "일반", state: "활성", reg: "2024-04-01" },
+    { name: "박민지", email: "minji@cubig.ai", dept: "경영지원", position: "매니저", grade: "일반", state: "비활성", reg: "2024-04-01" },
+    { name: "김태연", email: "tykim@cubig.ai", dept: "마케팅", position: "사원", grade: "외부", state: "활성", reg: "2024-04-01" },
+    { name: "임태호", email: "taeho@cubig.ai", dept: "IT운영", position: "주임", grade: "일반", state: "비활성", reg: "2024-04-01" },
+    { name: "이지훈", email: "jihun@cubig.ai", dept: "개발팀", position: "사원", grade: "일반", state: "활성", reg: "2024-04-01" },
+  ];
+  let selectedOrg = "전체";
+  let selectedStatusWidget = "전체";
+  let orgPanelClosed = false;
+
+  // 위젯
+  function renderStatusWidgetBar() {
+    const all = userList.length;
+    const active = userList.filter(u => u.state === '활성').length;
+    const inactive = userList.filter(u => u.state === '비활성').length;
+    const widgetList = [
+      { key: "전체", title: "전체 사용자", count: all },
+      { key: "활성", title: "활성 사용자", count: active },
+      { key: "비활성", title: "비활성 사용자", count: inactive },
+    ];
+    document.getElementById('statusWidgetBar').innerHTML = widgetList.map(w => `
+      <div class="status-widget${selectedStatusWidget === w.key ? ' selected' : ''}" onclick="selectStatusWidget('${w.key}')">
+        <div class="w-title">${w.title}</div>
+        <div class="w-count">${w.count}</div>
+      </div>
+    `).join('');
+  }
+  function selectStatusWidget(key) {
+    selectedStatusWidget = key;
+    document.getElementById('statusFilter').value = key === "전체" ? "" : key;
+    renderStatusWidgetBar();
+    renderUserTable();
+  }
+  function renderOrgPanel() {
+    const list = orgListData.map(org => `
+      <li class="org-item${selectedOrg === org.name ? ' selected' : ''}" onclick="selectOrg('${org.name}')">
+        <span>${org.name}</span>
+        <span class="org-badge">${org.count}</span>
+      </li>
+    `).join('');
+    document.getElementById('orgList').innerHTML = list;
+    const orgToggleBtn = document.getElementById('orgToggleBtn');
+    if(orgPanelClosed) {
+      orgToggleBtn.innerHTML = '&#10095;';
+      orgToggleBtn.title = "패널 열기";
+    } else {
+      orgToggleBtn.innerHTML = '&#10094;';
+      orgToggleBtn.title = "패널 닫기";
+    }
+  }
+  function toggleOrgPanel() {
+    orgPanelClosed = !orgPanelClosed;
+    const panel = document.getElementById('orgPanel');
+    if(orgPanelClosed) panel.classList.add('closed');
+    else panel.classList.remove('closed');
+    renderOrgPanel();
+  }
+  function renderUserTable() {
+    const tbody = document.getElementById('userTbody');
+    const search = document.getElementById('searchInput').value.trim().toLowerCase();
+    const grade = document.getElementById('gradeFilter').value;
+    const status = selectedStatusWidget === "전체" ? "" : selectedStatusWidget;
+    tbody.innerHTML = userList.filter(user => {
+      if (selectedOrg !== "전체" && user.dept !== selectedOrg) return false;
+      if (grade && user.grade !== grade) return false;
+      if (status && user.state !== status) return false;
+      if (search && !(user.name.toLowerCase().includes(search) || user.email.toLowerCase().includes(search) || user.dept.toLowerCase().includes(search))) return false;
+      return true;
+    }).map((user, i) => `
+      <tr>
+        <td>${user.name}</td>
+        <td>${user.email}</td>
+        <td>${user.dept}</td>
+        <td>${user.position}</td>
+        <td>${user.grade}</td>
+        <td>${user.state}</td>
+        <td>${user.reg}</td>
+        <td>
+          <button class="manage-btn" onclick="openUserModal('detail',${i})">상세</button>
+        </td>
+      </tr>
+    `).join('');
+  }
+  function selectOrg(orgName) {
+    selectedOrg = orgName;
+    renderOrgPanel();
+    renderUserTable();
+  }
+
+  // 상세/수정 팝업
+  let editingUserIdx = null;
+  function openUserModal(mode, idx) {
+    document.getElementById('userModal').classList.add('active');
+    editingUserIdx = idx;
+    const u = userList[idx];
+    if (mode === 'detail') {
+      document.getElementById('userModalInner').innerHTML = `
+        <div class="modal-title">사용자 상세 정보</div>
+        <div class="modal-detail">
+          <b>이름:</b> ${u.name}<br>
+          <b>이메일:</b> ${u.email}<br>
+          <b>부서:</b> ${u.dept}<br>
+          <b>직급:</b> ${u.position}<br>
+          <b>등급:</b> ${u.grade}<br>
+          <b>상태:</b> ${u.state}<br>
+          <b>등록일:</b> ${u.reg}<br>
+        </div>
+        <div class="modal-btn-bar">
+          <button onclick="openUserModal('edit', ${idx})">수정</button>
+        </div>
+      `;
+    } else if (mode === 'edit') {
+      document.getElementById('userModalInner').innerHTML = `
+        <div class="modal-title">사용자 정보 수정</div>
+        <form class="modal-edit-form" id="editUserForm" onsubmit="saveUser(event)">
+          <input name="name" value="${u.name}" required placeholder="이름">
+          <input name="email" value="${u.email}" required placeholder="이메일">
+          <input name="dept" value="${u.dept}" required placeholder="부서">
+          <input name="position" value="${u.position}" placeholder="직급">
+          <select name="grade" required>
+            <option ${u.grade==='관리자'?'selected':''}>관리자</option>
+            <option ${u.grade==='일반'?'selected':''}>일반</option>
+            <option ${u.grade==='외부'?'selected':''}>외부</option>
+          </select>
+          <select name="state" required>
+            <option ${u.state==='활성'?'selected':''}>활성</option>
+            <option ${u.state==='비활성'?'selected':''}>비활성</option>
+          </select>
+          <div class="modal-btn-bar" style="margin-top:24px;">
+            <button type="submit">저장</button>
+            <button type="button" class="delete" onclick="deleteUser(editingUserIdx)">삭제</button>
+            <button type="button" class="cancel" onclick="closeUserModal()">취소</button>
+          </div>
+        </form>
+      `;
+    }
+  }
+  function saveUser(e) {
+    e.preventDefault();
+    const f = e.target;
+    const user = {
+      name: f.name.value,
+      email: f.email.value,
+      dept: f.dept.value,
+      position: f.position.value,
+      grade: f.grade.value,
+      state: f.state.value,
+      reg: userList[editingUserIdx].reg
+    };
+    userList[editingUserIdx] = user;
+    closeUserModal();
+    renderStatusWidgetBar();
+    renderOrgPanel();
+    renderUserTable();
+  }
+  function closeUserModal() {
+    document.getElementById('userModal').classList.remove('active');
+  }
+  function deleteUser(idx) {
+    if (confirm("해당 사용자를 삭제하시겠습니까?")) {
+      userList.splice(idx, 1);
+      closeUserModal();
+      renderStatusWidgetBar();
+      renderOrgPanel();
+      renderUserTable();
+    }
+  }
+  // 초기 렌더링
+  renderStatusWidgetBar();
+  renderOrgPanel();
+  renderUserTable();
+</script>
+</body>
+</html>
