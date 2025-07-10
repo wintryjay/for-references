@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>공지사항 - LLM Capsule Admin</title>
+  <meta name="viewport" content="width=1200">
+  <style>
+    body { margin:0; background:#f8fafd; font-family:'Noto Sans KR',sans-serif; }
+    .admin-layout { display:flex; height:100vh; }
+    .sidebar { width:210px; background:#212b42; color:#fff;}
+    .company-name { font-size:18.5px; font-weight:600; height:65px; display:flex; align-items:center; padding:0 24px; border-bottom:1px solid #e5e8ef;}
+    .sidebar ul { list-style:none; margin:0; padding:0 10px; }
+    .sidebar ul li { padding:13px 20px; font-size:15.5px; color:#e1e6f0; border-radius:6px; cursor:pointer; margin-bottom:4px;}
+    .sidebar ul li.active, .sidebar ul li:hover { background:#2c3b5c; color:#fff;}
+    .main-content { flex:1; display:flex; flex-direction:column;}
+    .topbar { background:#fff; height:65px; display:flex; align-items:center; justify-content:flex-end;
+      box-sizing:border-box; padding:0 24px; border-bottom:1px solid #e5e8ef;}
+    .contract { color:#2b63bf; font-size:15.5px; font-weight:600;}
+    .admin-info { color:#333; font-size:15.3px;}
+    .logout-btn { font-size:14.3px; background:#3a4b7b; color:#fff; border:none; border-radius:7px; padding:7px 18px; font-weight:600; cursor:pointer; margin-left:12px;}
+    .content-wrap { padding:32px 38px 0 38px;}
+    .section-title { font-size:22px; font-weight:700; color:#25304e; margin-bottom:24px;}
+    .notice-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:19px; gap: 10px;}
+    .notice-toolbar .toolbar-left { display:flex; align-items:center; gap:10px; }
+    .notice-toolbar select,
+    .notice-toolbar input[type="date"] { padding:5px 9px; font-size:15px; border-radius:6px; border:1px solid #c7d1e0;}
+    .notice-toolbar .search-box { display:flex; align-items:center; gap:8px; }
+    .notice-toolbar input[type="text"] { padding:6px 10px; border-radius:6px; border:1px solid #c7d1e0; font-size:15px; min-width:180px;}
+    .notice-toolbar .search-btn { background:#e5e8ef; color:#333; border-radius:7px; font-size:15.5px; border:none; cursor:pointer; padding:7px 19px;}
+    .notice-table-wrap { position:relative; }
+    .write-btn { background:#2b63bf; color:#fff; font-weight:600; padding:7px 20px;
+      border-radius:7px; border:none; font-size:15.5px; cursor:pointer; z-index:2; margin-left:auto; display:inline-block;}
+    .notice-table { width:100%; border-collapse:collapse; background:#fff; border-radius:9px; overflow:hidden; box-shadow:0 1px 8px #f2f3f8;}
+    .notice-table th, .notice-table td { font-size:15.3px; padding:13px 9px; text-align:left; border-bottom:1px solid #eef1f7;}
+    .notice-table th { background:#f6f8fc; font-weight:700;}
+    .notice-table tbody tr:last-child td { border-bottom:none; }
+    .notice-table td.title { cursor:pointer; color:#2471cc; text-decoration:underline;}
+    .pagination { margin:20px 0 0 0; display:flex; gap:6px; }
+    .pagination button { background:none; border:none; font-size:15px; color:#3567c6; cursor:pointer; padding:2px 9px; border-radius:5px;}
+    .pagination button.active { background:#e4eaf7; color:#112355;}
+    .modal-bg { display:none; position:fixed; left:0;top:0;width:100vw;height:100vh;z-index:1000;background:rgba(50,57,89,.32);}
+    .modal { width:520px; background:#fff; border-radius:14px; position:fixed; left:50%;top:50%;transform:translate(-50%,-51%);z-index:1001; box-shadow:0 5px 25px #dadfea; padding:0;}
+    .modal .modal-header { padding:21px 26px 12px 26px; font-size:20px; font-weight:700; border-bottom:1px solid #e4e7ee;}
+    .modal .modal-meta { display:flex; gap:16px; color:#888; font-size:15.1px; padding:4px 26px 9px 26px;}
+    .modal .modal-body { padding:12px 26px 18px 26px; font-size:15.4px; line-height:1.76;}
+    .modal .modal-footer { padding:13px 24px 18px 24px; border-top:1px solid #e4e7ee; text-align:right;}
+    .modal .modal-footer button { background:#e7ebf7; color:#344066; font-weight:600; border:none; border-radius:6px; padding:7px 16px; font-size:15px; margin-left:7px;}
+    .modal .modal-footer .edit-btn { background:#2560bf; color:#fff;}
+    .modal .modal-footer .delete-btn { background:#f6b7b7; color:#a20f0f;}
+    .modal .close-x { position:absolute;right:17px;top:19px;font-size:21px;cursor:pointer;color:#6e6e8a;}
+    .no-data { color:#c8c9cc; font-size:16.2px; text-align:center; padding:38px 0;}
+    .modal-form { padding:16px 26px 18px 26px; display:flex; flex-direction:column; gap:14px;}
+    .modal-form label { font-size:15.5px; font-weight:600; margin-bottom:3px;}
+    .modal-form input[type="text"], .modal-form textarea,
+    .modal-form input[type="datetime-local"] { width:100%; padding:7px 10px; font-size:15px; border:1px solid #bfc6dc; border-radius:6px; box-sizing:border-box;}
+    .modal-form textarea { resize:vertical; min-height:92px;}
+    /* 조직/등급 다중선택 */
+    .multiselect { border:1px solid #bfc6dc; border-radius:6px; padding:7px 9px; font-size:15px; min-height:36px; background:#f7faff; display:flex; flex-wrap:wrap; gap:6px; cursor:pointer;}
+    .multiselect .option { background:#2b63bf; color:#fff; border-radius:4px; padding:2px 9px; margin-right:2px; font-size:14px;}
+    .multiselect .option .remove { margin-left:5px; cursor:pointer; font-weight:700;}
+    .option-list { display:none; position:absolute; background:#fff; border:1px solid #bfc6dc; box-shadow:0 2px 8px #eee; border-radius:6px; width:90%; z-index:2000; left:26px; top:100%; min-width:210px;}
+    .option-list.active { display:block; }
+    .option-list div { padding:7px 11px; cursor:pointer; font-size:15px;}
+    .option-list div:hover { background:#f1f5fb;}
+  </style>
+</head>
+<body>
+<script>
+  if (localStorage.getItem('cubig_login') !== 'Y') {
+    location.href = 'login.html';
+  }
+</script>
+<div class="admin-layout">
+  <nav class="sidebar">
+    <div class="company-name">큐빅 주식회사</div>
+    <ul>
+      <li>대시보드</li>
+      <li>라이선스 관리</li>
+      <li>조직/사용자 관리</li>
+      <li>사용 현황</li>
+      <li>대화 관리</li>
+      <li>문서 관리</li>
+      <li>활동 이력</li>
+      <li class="active">공지 사항</li>
+    </ul>
+  </nav>
+  <div class="main-content">
+    <header class="topbar">
+      <span class="contract">계약 만료일: 2025-12-31 (D-172)</span>
+      <span class="admin-info">홍길동 (관리자)</span>
+      <button class="logout-btn" onclick="logout()">로그아웃</button>
+    </header>
+    <div class="content-wrap">
+      <div class="section-title">공지사항</div>
+      <!-- 툴바 -->
+      <div class="notice-toolbar">
+        <div class="toolbar-left">
+          <select id="periodSelect">
+            <option value="오늘">오늘</option>
+            <option value="이번주">이번주</option>
+            <option value="이번달">이번달</option>
+            <option value="직접선택">직접 선택</option>
+          </select>
+          <input type="date" id="startDate" style="width:125px;">
+          <span style="color:#aaa; margin:0 4px;">~</span>
+          <input type="date" id="endDate" style="width:125px;">
+          <select id="noticeTarget">
+            <option value="전체">전체</option>
+            <option value="경영지원">경영지원</option>
+            <option value="영업팀">영업팀</option>
+            <option value="개발팀">개발팀</option>
+            <option value="등급A">등급A</option>
+            <option value="등급B">등급B</option>
+          </select>
+          <div class="search-box">
+            <input type="text" id="keyword" placeholder="제목/내용 검색">
+            <button class="search-btn" onclick="searchNotice()">검색</button>
+          </div>
+        </div>
+        <button class="write-btn" id="noticeWriteBtn" onclick="openNoticeWrite()">공지 작성</button>
+      </div>
+      <div class="notice-table-wrap">
+        <table class="notice-table">
+          <thead>
+            <tr>
+              <th style="width:6%;">ID</th>
+              <th style="width:33%;">제목</th>
+              <th style="width:11%;">대상</th>
+              <th style="width:12%;">작성자</th>
+              <th style="width:15%;">작성 일시</th>
+              <th style="width:15%;">개시 일시</th>
+            </tr>
+          </thead>
+          <tbody id="noticeTableBody"></tbody>
+        </table>
+        <div class="pagination" id="pagination"></div>
+      </div>
+    </div>
+  </div>
+  <!-- 상세 팝업(모달) -->
+  <div class="modal-bg" id="noticeModalBg" onclick="closeNoticeModal()"></div>
+  <div class="modal" id="noticeModal" style="display:none;">
+    <div class="modal-header" id="modalTitle">공지 제목</div>
+    <span class="close-x" onclick="closeNoticeModal()">×</span>
+    <div class="modal-meta">
+      <span id="modalTarget">대상: 전체</span>
+      <span id="modalWriter">작성자: 홍길동</span>
+      <span id="modalDate">2024-07-13 15:10</span>
+      <span id="modalOpenDate">개시: 2024-07-14 09:00</span>
+    </div>
+    <div class="modal-body" id="modalContent">
+      공지 내용...
+    </div>
+    <div class="modal-footer" id="modalFooter">
+      <button class="edit-btn" onclick="editNotice()" style="display:none;">수정</button>
+      <button class="delete-btn" onclick="deleteNotice()" style="display:none;">삭제</button>
+      <button onclick="closeNoticeModal()">닫기</button>
+    </div>
+  </div>
+  <!-- 공지 작성 팝업(모달) -->
+  <div class="modal-bg" id="writeModalBg" onclick="closeNoticeWrite()"></div>
+  <div class="modal" id="writeModal" style="display:none;">
+    <div class="modal-header">공지 작성</div>
+    <span class="close-x" onclick="closeNoticeWrite()">×</span>
+    <form class="modal-form" id="noticeWriteForm" onsubmit="submitNotice(event)">
+      <label>제목<input type="text" id="wTitle" required maxlength="80"></label>
+      <label>조직
+        <div id="orgSelect" class="multiselect" onclick="toggleOptionList('org')">
+          <span id="orgSelected"></span>
+        </div>
+        <div id="orgOptionList" class="option-list"></div>
+      </label>
+      <label>등급
+        <div id="levelSelect" class="multiselect" onclick="toggleOptionList('level')">
+          <span id="levelSelected"></span>
+        </div>
+        <div id="levelOptionList" class="option-list"></div>
+      </label>
+      <label>내용<textarea id="wContent" required maxlength="4000"></textarea></label>
+      <label>개시 일시(게시 시작일)
+        <input type="datetime-local" id="wOpenDate" required>
+      </label>
+      <div style="text-align:right; margin-top:12px;">
+        <button type="button" onclick="closeNoticeWrite()">취소</button>
+        <button type="submit" style="background:#2560bf;color:#fff;">등록</button>
+      </div>
+    </form>
+  </div>
+</div>
+<script>
+  if (localStorage.getItem('cubig_login') !== 'Y') {
+    location.href = 'login.html';
+  }
+  // 샘플 데이터
+  let notices = [
+    {
+      id:1, title:"LLM Capsule 서버 점검 안내", target:"전체", writer:"관리자",
+      date:"2024-07-13 14:23", openDate:"2024-07-14 09:00", read:false,
+      content:"7월 15일 00:00~03:00 서버 점검이 진행됩니다.<br>서비스 이용에 참고 바랍니다."
+    },
+    {
+      id:2, title:"신규 기능 업데이트 공지", target:"영업팀", writer:"김팀장",
+      date:"2024-07-12 10:22", openDate:"2024-07-13 08:00", read:true,
+      content:"RAG 문서 동기화 기능이 추가되었습니다.<br>자세한 내용은 메뉴얼을 참고하세요."
+    },
+    {
+      id:3, title:"보안 정책 안내", target:"전체", writer:"관리자",
+      date:"2024-07-10 17:12", openDate:"2024-07-10 18:00", read:true,
+      content:"보안 정책이 강화되어 첨부파일 다운로드 정책이 변경됩니다."
+    },
+  ];
+  let isAdmin = true; // 관리자 여부
+
+  // 조직/등급 옵션
+  const orgOptions = ["전체", "경영지원", "영업팀", "개발팀"];
+  const levelOptions = ["전체", "등급A", "등급B"];
+
+  // 멀티셀렉트 로직
+  function toggleOptionList(type) {
+    document.getElementById(type+"OptionList").classList.toggle("active");
+  }
+  document.body.addEventListener("click",function(e){
+    if (!e.target.closest(".multiselect") && !e.target.closest(".option-list")) {
+      document.getElementById("orgOptionList").classList.remove("active");
+      document.getElementById("levelOptionList").classList.remove("active");
+    }
+  });
+  // 멀티셀렉트 옵션 렌더
+  function renderMultiSelect(type) {
+    let opts = (type=="org"?orgOptions:levelOptions);
+    let sel = (type=="org"?orgSelected:levelSelected);
+    let selected = selValues[type];
+    let html = opts.map(opt=>`<div onclick="selectMulti('${type}','${opt}')">${selected.includes(opt)?'✔️ ':''}${opt}</div>`).join("");
+    document.getElementById(type+"OptionList").innerHTML = html;
+    document.getElementById(type+"Selected").innerHTML = selected.map(o=>`
+      <span class="option">${o}<span class="remove" onclick="removeSelected(event,'${type}','${o}')">&times;</span></span>
+    `).join("");
+  }
+  // 선택 값
+  let selValues = {org:[], level:[]};
+  function selectMulti(type, value) {
+    let arr = selValues[type];
+    if (arr.includes(value)) arr = arr.filter(v=>v!==value);
+    else arr.push(value);
+    // 전체 선택시 나머지 비움
+    if (value === "전체") arr = ["전체"];
+    else arr = arr.filter(v=>v!=="전체");
+    selValues[type] = arr;
+    renderMultiSelect(type);
+  }
+  function removeSelected(e, type, value) {
+    e.stopPropagation();
+    selValues[type] = selValues[type].filter(v=>v!==value);
+    renderMultiSelect(type);
+  }
+  // 테이블 렌더
+  function renderNoticeTable() {
+    let html = '';
+    notices.forEach(n=>{
+      html += `<tr>
+        <td>${n.id}</td>
+        <td class="title" onclick="openNoticeModal(${n.id})">${n.title}</td>
+        <td>${n.target}</td>
+        <td>${n.writer}</td>
+        <td>${n.date}</td>
+        <td>${n.openDate}</td>
+      </tr>`;
+    });
+    document.getElementById("noticeTableBody").innerHTML = html || `<tr><td colspan="6" class="no-data">등록된 공지사항이 없습니다.</td></tr>`;
+  }
+  // 공지 상세
+  function openNoticeModal(id) {
+    let n = notices.find(x=>x.id==id);
+    if (!n) return;
+    document.getElementById("modalTitle").innerText = n.title;
+    document.getElementById("modalTarget").innerText = "대상: " + n.target;
+    document.getElementById("modalWriter").innerText = "작성자: " + n.writer;
+    document.getElementById("modalDate").innerText = n.date;
+    document.getElementById("modalOpenDate").innerText = "개시: " + n.openDate;
+    document.getElementById("modalContent").innerHTML = n.content;
+    document.getElementById("noticeModalBg").style.display = "";
+    document.getElementById("noticeModal").style.display = "";
+  }
+  function closeNoticeModal() {
+    document.getElementById("noticeModalBg").style.display = "none";
+    document.getElementById("noticeModal").style.display = "none";
+  }
+  // 검색 등 기타
+  function searchNotice() {
+    alert("검색 준비 중");
+  }
+  // 공지작성 팝업
+  function openNoticeWrite() {
+    document.getElementById("writeModalBg").style.display = "";
+    document.getElementById("writeModal").style.display = "";
+    document.getElementById("noticeWriteForm").reset();
+    selValues = {org:[], level:[]};
+    renderMultiSelect("org"); renderMultiSelect("level");
+    document.getElementById("wOpenDate").value = new Date().toISOString().slice(0,16);
+  }
+  function closeNoticeWrite() {
+    document.getElementById("writeModalBg").style.display = "none";
+    document.getElementById("writeModal").style.display = "none";
+  }
+  // 공지 등록 샘플
+  function submitNotice(e) {
+    e.preventDefault();
+    let title = document.getElementById("wTitle").value;
+    let orgs = selValues.org.length ? selValues.org : ["전체"];
+    let levels = selValues.level.length ? selValues.level : ["전체"];
+    let target = [...orgs, ...levels].join(", ");
+    let content = document.getElementById("wContent").value.replace(/\n/g,"<br>");
+    let openDate = document.getElementById("wOpenDate").value.replace("T"," ");
+    let now = todayStr();
+    notices.unshift({
+      id: notices.length ? notices[0].id+1 : 1,
+      title, target, writer:"홍길동", date:now, openDate, read:false, content
+    });
+    renderNoticeTable();
+    closeNoticeWrite();
+  }
+  // 오늘 날짜 yyyy-mm-dd hh:mm
+  function todayStr() {
+    let d = new Date(), y = d.getFullYear(), m = (d.getMonth()+1).toString().padStart(2,'0'),
+        day = d.getDate().toString().padStart(2,'0'),
+        h = d.getHours().toString().padStart(2,'0'),
+        mi = d.getMinutes().toString().padStart(2,'0');
+    return `${y}-${m}-${day} ${h}:${mi}`;
+  }
+  function logout() {
+    localStorage.removeItem('cubig_login');
+    location.href = 'login.html';
+  }
+  // 기간 선택 자동화
+  function setPeriodRange() {
+    const sel = document.getElementById('periodSelect');
+    const start = document.getElementById('startDate');
+    const end = document.getElementById('endDate');
+    const now = new Date();
+    if (sel.value === '오늘') {
+      const today = now.toISOString().slice(0,10);
+      start.value = today;
+      end.value = today;
+    } else if (sel.value === '이번주') {
+      const day = now.getDay() || 7;
+      const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - day + 1);
+      const sunday = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + 6);
+      start.value = monday.toISOString().slice(0,10);
+      end.value = sunday.toISOString().slice(0,10);
+    } else if (sel.value === '이번달') {
+      const first = new Date(now.getFullYear(), now.getMonth(), 1);
+      const last = new Date(now.getFullYear(), now.getMonth()+1, 0);
+      start.value = first.toISOString().slice(0,10);
+      end.value = last.toISOString().slice(0,10);
+    }
+    // 직접선택은 입력값 유지
+  }
+  document.getElementById('periodSelect').addEventListener('change', setPeriodRange);
+  window.onload = function() {
+    setPeriodRange();
+    renderMultiSelect("org"); renderMultiSelect("level");
+    renderNoticeTable();
+  };
+</script>
+</body>
+</html>
