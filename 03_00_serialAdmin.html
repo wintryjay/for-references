@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>라이선스(시리얼) 관리</title>
+  <meta name="viewport" content="width=1200">
+  <style>
+    body { margin:0; background:#f8fafd; font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; }
+    .admin-layout { display: flex; height: 100vh; }
+    .sidebar { width: 210px; background: #212b42; display: flex; flex-direction: column; color:#fff; min-width:52px; }
+    .company-name { font-size:18.5px; font-weight:600; height:65px; display:flex; align-items:center; padding:0 24px; border-bottom:1px solid #344063;}
+    .sidebar ul { list-style:none; padding:0 10px; margin:0; }
+    .sidebar ul li { padding:13px 20px; font-size:15.5px; color:#e1e6f0; border-radius:6px; cursor:pointer; margin-bottom:4px; transition:.15s;}
+    .sidebar ul li.active, .sidebar ul li:hover { background:#2c3b5c; color:#fff; }
+    .main-content { flex:1; display:flex; flex-direction:column; }
+    .topbar { background:#fff; height:65px; display:flex; align-items:center; justify-content:flex-end; padding:0 35px 0 0; border-bottom:1px solid #e5e8ef; gap:27px;}
+    .contract { color:#2b63bf; font-size:15.5px; font-weight:600; }
+    .admin-info { color:#333; font-size:15.3px; }
+    .edit-btn { font-size:12.5px; margin-left:7px; background:#f4f7fe; border:none; border-radius:5px; padding:2.5px 9px; cursor:pointer; color:#4461b1;}
+    .logout-btn { font-size:14.3px; background:#3a4b7b; color:#fff; border:none; border-radius:7px; padding:7px 18px; font-weight:600; cursor:pointer; margin-left:12px;}
+    .content-wrap { padding:32px 38px 0 38px; }
+    .section-title { font-size:22px; font-weight:700; color:#25304e; margin-bottom:24px;}
+    /* 상태 위젯 */
+    .status-widgets { display: flex; gap: 20px; margin-bottom: 30px; }
+    .status-widget { flex: 1 1 0; min-width: 120px; display:flex; flex-direction:column; align-items:flex-start; background:#fff; border-radius:10px; box-shadow:0 1px 8px #ebedf1; padding:19px 25px 16px 21px; cursor:pointer; border:2px solid #fff; transition:.2s; box-sizing: border-box;}
+    .status-widget.selected, .status-widget:hover { border-color:#2759c6; box-shadow:0 3px 13px #d5e1f7; }
+    .status-widget .label { font-size:15.4px; font-weight:500; margin-bottom:7px;}
+    .status-widget .count { font-size:22px; font-weight:700;}
+    .status-widget.widget-전체 { background:#eaf0fe;}
+    .status-widget.widget-사용가능 { background:#eaf3fe;}
+    .status-widget.widget-사용중 { background:#e7fbf2;}
+    .status-widget.widget-만료 { background:#fff0e7;}
+    .status-widget.widget-회수 { background:#f1f3f7;}
+    .status-widget.widget-문제 { background:#ffeaea;}
+    .license-table-wrap { background:#fff; border-radius:11px; box-shadow:0 1px 8px #ebedf1; padding:30px 28px 30px 28px; }
+    .table-topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px;}
+    .filter-bar { display:flex; gap:12px; align-items:center; }
+    .filter-bar select, .filter-bar input { border:1px solid #c7d1e7; border-radius:6px; padding:6px 13px; font-size:15px; }
+    .add-license-btn { background:#3067f2; color:#fff; border:none; border-radius:7px; padding:7px 17px; font-size:15px; font-weight:600; cursor:pointer;}
+    .license-table { width:100%; border-collapse:collapse; margin-top:7px;}
+    .license-table th, .license-table td { border-bottom:1px solid #e8ebf1; padding:8.5px 8px; font-size:14.7px; text-align:center;}
+    .license-table th { color:#46507d; background:#f6f8fd;}
+    .license-table td { background:#fff; }
+    .serial-copy { color:#4063e5; text-decoration:underline; cursor:pointer; }
+    .serial-copy:hover { color:#234bbb; }
+    .status-label { border-radius:7px; padding:3px 13px; font-size:13px; font-weight:500; }
+    .status-사용가능 { background:#e2eafc; color:#2152a5;}
+    .status-사용중 { background:#e0f8ea; color:#2b9163;}
+    .status-만료 { background:#fff0e6; color:#c65613;}
+    .status-회수 { background:#f3f6f8; color:#8d94a1;}
+    .status-문제 { background:#ffe1e3; color:#e13043;}
+    .action-btn { font-size:13.5px; padding:3px 13px; border:none; border-radius:6px; margin-right:6px; background:#f3f6fc; color:#3556b2; cursor:pointer; }
+    .action-btn:last-child { margin-right:0; }
+    .memo-btn { color:#4461b1; text-decoration:underline; background:none; border:none; font-size:14px; cursor:pointer; }
+    .user-link { color:#222; text-decoration:underline; cursor:pointer; }
+    .user-link:hover { color:#3156bc;}
+    /* 미니 프로필 팝업 */
+    .mini-profile { position:absolute; z-index:999; background:#fff; border-radius:10px; box-shadow:0 2px 18px #aaa5; padding:18px 22px; font-size:15.2px; min-width:220px;}
+    .mini-profile-title { font-weight:700; margin-bottom:4px; color:#2a3656;}
+    .mini-profile-label { color:#8490b0; font-size:13.5px; margin-right:7px;}
+    .mini-profile-close { position:absolute; top:9px; right:11px; border:none; background:none; font-size:18px; color:#b1b5c2; cursor:pointer;}
+    /* 메모 팝업, 토스트 */
+    .modal-bg { display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; z-index:1000; background:rgba(35,38,53,.16); justify-content:center; align-items:center;}
+    .modal-bg.active { display:flex; }
+    .modal-content { background:#fff; min-width:340px; max-width:94vw; border-radius:13px; padding:32px 28px 22px 32px; box-shadow:0 4px 24px #33343b2c; position:relative;}
+    .modal-title { font-size:17px; font-weight:700; color:#263b63; margin-bottom:13px;}
+    .modal-close { position:absolute; top:12px; right:14px; background:none; border:none; font-size:23px; color:#b1b5c2; cursor:pointer;}
+    .modal-detail { font-size:15.4px; margin-bottom:13px; }
+    .modal-memo-textarea { width:97%; min-height:66px; border:1.2px solid #d0dae7; border-radius:8px; font-size:15px; padding:7px 10px; }
+    .modal-btn-bar { text-align:right; }
+    .modal-btn-bar button { margin-left:7px; padding:6px 15px; font-size:14.5px; border:none; border-radius:6px; background:#4461b1; color:#fff; cursor:pointer;}
+    .modal-btn-bar .cancel { background:#b2bedf; color:#fff;}
+    .toast { position:fixed; top:55px; right:40px; background:#222e; color:#fff; border-radius:8px; padding:9px 19px; font-size:15px; z-index:2000; display:none;}
+    .toast.show { display:block; animation:toastShow 2s;}
+    @keyframes toastShow { from{opacity:0;} to{opacity:1;} }
+  </style>
+</head>
+<body>
+<script>
+  if (localStorage.getItem('cubig_login') !== 'Y') {
+    location.href = 'login.html';
+  }
+</script>
+<div class="admin-layout">
+  <!-- 사이드바(좌측 메뉴) -->
+  <nav class="sidebar">
+    <div class="company-name">큐빅 주식회사</div>
+      <ul>
+        <li href="https://wintryjay.github.io/for-references/02_00_dashBoard.html" class="active">대시보드</li>
+        <li href="https://wintryjay.github.io/for-references/03_00_serialAdmin.html">라이선스 관리</li>
+        <li href="https://wintryjay.github.io/for-references/04_00_userAdmin.html">조직/사용자 관리</li>
+        <li href="https://wintryjay.github.io/for-references/05_00_usage.html">사용 현황</li>
+        <li href="https://wintryjay.github.io/for-references/06_00_promptAdmin.html">대화 관리</li>
+        <li href="https://wintryjay.github.io/for-references/07_00_docAdmin.html">문서 관리</li>
+        <li href="https://wintryjay.github.io/for-references/08_00_logAdmin.html">활동 이력</li>
+        <li href="https://wintryjay.github.io/for-references/09_00_notice.html">공지 사항</li>
+      </ul>
+  </nav>
+  <div class="main-content">
+    <header class="topbar">
+      <span class="contract">계약 만료일: 2025-12-31 (D-172)</span>
+      <span class="admin-info">홍길동 (관리자) <button class="edit-btn">내 정보 수정</button></span>
+      <button class="logout-btn" onclick="logout()">로그아웃</button>
+    </header>
+    <div class="content-wrap">
+      <div class="section-title">시리얼(라이선스) 관리</div>
+      <!-- 상태 위젯 -->
+      <div class="status-widgets" id="statusWidgets"></div>
+      <div class="license-table-wrap">
+        <div class="table-topbar">
+          <div class="filter-bar">
+            <select id="statusFilter" onchange="renderTable()">
+              <option value="">상태 전체</option>
+              <option value="사용가능">사용가능</option>
+              <option value="사용중">사용중</option>
+              <option value="만료">만료</option>
+              <option value="회수">회수</option>
+              <option value="문제">문제/오류</option>
+            </select>
+            <input type="text" id="searchInput" placeholder="시리얼/사용자/PC명 검색" oninput="renderTable()">
+          </div>
+          <button class="add-license-btn" onclick="alert('시리얼 등록 팝업(추후 구현)')">+ 시리얼 등록</button>
+        </div>
+        <table class="license-table" id="licenseTable">
+          <thead>
+            <tr>
+              <th style="width:45px;">ID</th>
+              <th style="width:145px;">시리얼 번호</th>
+              <th style="width:80px;">상태</th>
+              <th style="width:120px;">배분 대상자</th>
+              <th style="width:95px;">PC명</th>
+              <th style="width:108px;">설치일</th>
+              <th style="width:108px;">만료일</th>
+              <th style="width:108px;">생성일</th>
+              <th style="width:90px;">메모</th>
+              <th style="width:126px;">관리</th>
+            </tr>
+          </thead>
+          <tbody id="licenseTbody"></tbody>
+        </table>
+      </div>
+    </div>
+    <!-- 미니 프로필 팝업 -->
+    <div id="profilePopup" class="mini-profile" style="display:none;"></div>
+    <!-- 메모 팝업 -->
+    <div class="modal-bg" id="memoModal">
+      <div class="modal-content">
+        <button class="modal-close" onclick="closeMemoModal()">&times;</button>
+        <div class="modal-title">메모</div>
+        <textarea id="memoTextarea" class="modal-memo-textarea"></textarea>
+        <div class="modal-btn-bar">
+          <button onclick="saveMemo()">저장</button>
+          <button class="cancel" onclick="closeMemoModal()">취소</button>
+        </div>
+      </div>
+    </div>
+    <!-- 토스트 알림 -->
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+<script>
+  function logout() {
+    localStorage.removeItem('cubig_login');
+    location.href = 'login.html';
+  }
+
+  // 예시 데이터
+  const licenseData = [
+    {
+      id: 1,
+      serial: "0023-ABCD-EFGH",
+      status: "사용중",
+      user: {name: "홍길동", email: "hong@cubig.ai", dept: "개발팀", position: "책임", lastLogin:"2025-07-12 11:34", state:"활성"},
+      pc: "PC-001",
+      installDate: "2024-03-05",
+      expireDate: "2025-03-04",
+      created: "2024-03-01",
+      memo: "지급 요청",
+      memoShow: true
+    },
+    {
+      id: 2,
+      serial: "0024-AAAA-FFFF",
+      status: "사용가능",
+      user: null,
+      pc: "",
+      installDate: "",
+      expireDate: "2025-03-08",
+      created: "2024-03-08",
+      memo: "",
+      memoShow: false
+    },
+    {
+      id: 3,
+      serial: "0025-BBBB-HH22",
+      status: "만료",
+      user: {name:"박민지", email:"minji@cubig.ai", dept:"경영지원", position:"매니저", lastLogin:"2025-07-09 08:30", state:"비활성"},
+      pc: "PC-003",
+      installDate: "2024-03-09",
+      expireDate: "2025-03-08",
+      created: "2024-03-09",
+      memo: "만료 확인",
+      memoShow: true
+    },
+    {
+      id: 4,
+      serial: "0026-ZZZZ-7777",
+      status: "회수",
+      user: {name:"김태연", email:"tykim@cubig.ai", dept:"마케팅", position:"사원", lastLogin:"2025-07-05 17:11", state:"활성"},
+      pc: "PC-009",
+      installDate: "2024-04-04",
+      expireDate: "2025-04-03",
+      created: "2024-04-01",
+      memo: "",
+      memoShow: false
+    },
+    {
+      id: 5,
+      serial: "0027-ERRR-ERRR",
+      status: "문제",
+      user: {name:"임태호", email:"taeho@cubig.ai", dept:"IT운영", position:"주임", lastLogin:"2025-06-18 13:01", state:"문제"},
+      pc: "PC-111",
+      installDate: "2024-03-11",
+      expireDate: "2025-03-11",
+      created: "2024-03-11",
+      memo: "비정상 로그인",
+      memoShow: true
+    }
+  ];
+
+  // 상태별 컬러맵
+  const statusClass = { "사용가능":"status-사용가능","사용중":"status-사용중","만료":"status-만료","회수":"status-회수","문제":"status-문제"};
+  // 위젯 색상 매핑
+  const statusWidgetColor = { "전체":"widget-전체","사용가능":"widget-사용가능","사용중":"widget-사용중","만료":"widget-만료","회수":"widget-회수","문제":"widget-문제"};
+
+  // 메모 상태
+  let currentMemoIdx = null;
+  let currentWidgetFilter = ""; // 상태 위젯 필터
+
+  // 상태 위젯 렌더
+  function renderStatusWidgets() {
+    const statusMap = { "전체": licenseData.length };
+    ["사용가능", "사용중", "만료", "회수", "문제"].forEach(st => {
+      statusMap[st] = licenseData.filter(x=>x.status===st).length;
+    });
+    const widgetList = ["전체","사용가능","사용중","만료","회수","문제"];
+    const widgets = widgetList.map(st => `
+      <div class="status-widget ${statusWidgetColor[st]||''}${currentWidgetFilter===st ? " selected":""}" 
+        onclick="selectStatusWidget('${st}')">
+        <span class="label">${st}</span>
+        <span class="count">${statusMap[st]}</span>
+      </div>
+    `).join('');
+    document.getElementById('statusWidgets').innerHTML = widgets;
+  }
+  function selectStatusWidget(st) {
+    if(st==="전체") {
+      currentWidgetFilter = "";
+      document.getElementById('statusFilter').value = "";
+    } else {
+      currentWidgetFilter = st;
+      document.getElementById('statusFilter').value = st;
+    }
+    renderStatusWidgets();
+    renderTable();
+  }
+
+  // 테이블 렌더
+  function renderTable() {
+    const tbody = document.getElementById('licenseTbody');
+    let statusFilter = document.getElementById('statusFilter').value;
+    if(currentWidgetFilter) statusFilter = currentWidgetFilter;
+    const search = document.getElementById('searchInput').value.trim().toLowerCase();
+    tbody.innerHTML = "";
+    licenseData.forEach((row, i) => {
+      if (statusFilter && row.status !== statusFilter) return;
+      if (
+        search &&
+        !(
+          row.serial.toLowerCase().includes(search) ||
+          (row.user && (row.user.name.toLowerCase().includes(search) || row.user.email.toLowerCase().includes(search))) ||
+          (row.pc && row.pc.toLowerCase().includes(search))
+        )
+      ) return;
+      const tr = document.createElement('tr');
+      // ID
+      tr.innerHTML = `<td>${row.id}</td>`;
+      // 시리얼
+      tr.innerHTML += `<td><span class="serial-copy" onclick="copySerial('${row.serial}')">${row.serial}</span></td>`;
+      // 상태
+      tr.innerHTML += `<td><span class="status-label ${statusClass[row.status]||''}">${row.status}</span></td>`;
+      // 배분 대상자
+      if (row.user) {
+        tr.innerHTML += `<td><span class="user-link" onclick="showProfile(event,${i})">${row.user.name}</span></td>`;
+      } else {
+        tr.innerHTML += `<td>-</td>`;
+      }
+      // PC명
+      tr.innerHTML += `<td>${row.pc||"-"}</td>`;
+      // 설치일
+      tr.innerHTML += `<td>${row.installDate||"-"}</td>`;
+      // 만료일
+      tr.innerHTML += `<td>${row.expireDate||"-"}</td>`;
+      // 생성일
+      tr.innerHTML += `<td>${row.created||"-"}</td>`;
+      // 메모
+      if(row.memo && row.memoShow) {
+        tr.innerHTML += `<td><button class="memo-btn" onclick="openMemoModal(${i})">보기</button></td>`;
+      } else {
+        tr.innerHTML += `<td></td>`;
+      }
+      // 관리(배분/회수/상세)
+      let act = "";
+      if(row.status==="미배분") {
+        act = `<button class="action-btn" onclick="alert('배분 기능(추후 구현)')">배분</button>`;
+      } else if(row.status==="사용중") {
+        act = `<button class="action-btn" onclick="alert('회수 기능(추후 구현)')">회수</button>`;
+      } else if(row.status==="회수") {
+        act = `<button class="action-btn" onclick="alert('재배분 기능(추후 구현)')">재배분</button>`;
+      } else if(row.status==="문제") {
+        act = `<button class="action-btn" onclick="alert('문제 확인(추후 구현)')">확인</button>`;
+      } else {
+        act = "";
+      }
+      act += `<button class="action-btn" onclick="alert('상세 기능(추후 구현)')">상세</button>`;
+      tr.innerHTML += `<td>${act}</td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // 시리얼 복사
+  function copySerial(serial) {
+    navigator.clipboard.writeText(serial).then(() => {
+      showToast("시리얼 번호가 복사되었습니다.");
+    });
+  }
+  // 토스트
+  function showToast(msg) {
+    const toast = document.getElementById('toast');
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'),1600);
+  }
+
+  // 미니 프로필(사용자)
+  function showProfile(event, idx) {
+    event.stopPropagation();
+    const user = licenseData[idx].user;
+    let html = `<button class="mini-profile-close" onclick="closeProfilePopup()">&times;</button>
+    <div class="mini-profile-title">${user.name} <span style="font-weight:400; color:#7d859d;">(${user.position})</span></div>
+    <div style="margin-bottom:7px;"><span class="mini-profile-label">이메일</span>${user.email}</div>
+    <div style="margin-bottom:7px;"><span class="mini-profile-label">조직</span>${user.dept}</div>
+    <div style="margin-bottom:7px;"><span class="mini-profile-label">상태</span>${user.state}</div>
+    <div><span class="mini-profile-label">최근 로그인</span>${user.lastLogin}</div>`;
+    const popup = document.getElementById('profilePopup');
+    popup.innerHTML = html;
+    popup.style.display = "block";
+    // 위치(클릭 기준)
+    const rect = event.target.getBoundingClientRect();
+    popup.style.top = (rect.top + window.scrollY + 26) + "px";
+    popup.style.left = (rect.left + window.scrollX - 20) + "px";
+    // 바깥 클릭 시 닫기
+    setTimeout(()=>{
+      window.addEventListener('click', closeProfilePopup, {once:true});
+    },0);
+  }
+  function closeProfilePopup() {
+    document.getElementById('profilePopup').style.display = "none";
+  }
+
+  // 메모 팝업
+  function openMemoModal(idx) {
+    currentMemoIdx = idx;
+    document.getElementById('memoTextarea').value = licenseData[idx].memo;
+    document.getElementById('memoModal').classList.add('active');
+  }
+  function closeMemoModal() {
+    document.getElementById('memoModal').classList.remove('active');
+    currentMemoIdx = null;
+  }
+  function saveMemo() {
+    if(currentMemoIdx!==null) {
+      licenseData[currentMemoIdx].memo = document.getElementById('memoTextarea').value;
+      licenseData[currentMemoIdx].memoShow = !!licenseData[currentMemoIdx].memo;
+      renderTable();
+      showToast("메모가 저장되었습니다.");
+      closeMemoModal();
+    }
+  }
+
+  // 초기 렌더
+  renderStatusWidgets();
+  renderTable();
+</script>
+</body>
+</html>
