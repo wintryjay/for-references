@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>고객사 어드민:활동 이력</title>
+  <meta name="viewport" content="width=1200">
+  <style>
+    body { margin:0; background:#f8fafd; font-family:'Noto Sans KR',sans-serif; }
+    .admin-layout { display:flex; height:100vh; }
+    .sidebar { width:210px; background:#212b42; color:#fff;}
+    .company-name { font-size:18.5px; font-weight:600; height:65px; display:flex; align-items:center; padding:0 24px; border-bottom:1px solid #e5e8ef;}
+    .sidebar nav { 
+      width: 100%; 
+    }
+    .sidebar nav a {
+      display: block; 
+      padding: 16px 32px; 
+      color: rgba(255,255,255,0.9); 
+      text-decoration: none;
+      font-size: 16px; 
+      font-weight: 500;
+      border-left: 4px solid transparent; 
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .sidebar nav a:hover,
+    .sidebar nav a.active { 
+      background: rgba(255,255,255,0.15);
+      border-left: 4px solid #ffffff; 
+      color: #ffffff;
+    }
+    .main-content { flex:1; display:flex; flex-direction:column;}
+    .topbar { background:#fff; height:65px; display:flex; align-items:center; justify-content:flex-end;
+      box-sizing:border-box; padding:0 24px; border-bottom:1px solid #e5e8ef;}
+    .contract { color:#2b63bf; font-size:15.5px; font-weight:600;}
+    .admin-info { color:#333; font-size:15.3px;}
+    .logout-btn { font-size:14.3px; background:#3a4b7b; color:#fff; border:none; border-radius:7px; padding:7px 18px; font-weight:600; cursor:pointer; margin-left:12px;}
+    .content-wrap { padding:32px 38px 0 38px;}
+    .section-title { font-size:22px; font-weight:700; color:#25304e; margin-bottom:24px;}
+    .log-widgets { display:flex; gap:19px; margin-bottom:19px;}
+    .log-widget { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background:#fff; border-radius:12px; box-shadow:0 1px 8px #ebedf1; padding:15px 0 13px 0; cursor:pointer;
+      border:2.3px solid transparent; transition:.18s; position:relative; min-width:0;}
+    .log-widget .log-label { font-size:15.4px; font-weight:600; letter-spacing:-0.5px;}
+    .log-widget .log-count { font-size:23px; font-weight:700; margin-top:9px;}
+    .log-widget.all .log-label { color:#1a2145;}
+    .log-widget.login .log-label { color:#317a8c;}
+    .log-widget.upload .log-label { color:#35747f;}
+    .log-widget.download .log-label { color:#7a5e23;}
+    .log-widget.edit .log-label { color:#a53d29;}
+    /* 툴바 개선 */
+    .toolbar { display:flex; align-items:center; justify-content:space-between; gap:14px; margin-bottom:16px;}
+    .toolbar .toolbar-left { display:flex; align-items:center; gap:10px;}
+    .toolbar .toolbar-right { display:flex; align-items:center; gap:8px;}
+    .toolbar select, .toolbar input[type="date"], .toolbar input[type="text"] {
+      font-size:15px; border-radius:7px; border:1px solid #c7d1e7; padding:7px 12px;
+    }
+    .toolbar input[type="date"] { width:118px;}
+    .toolbar .search-select { width:108px;}
+    .toolbar .search-btn { background:#f4f7fe; color:#4461b1; border:1px solid #b2bfdc; border-radius:7px; padding:7px 17px; font-size:15px; font-weight:600; cursor:pointer;}
+    .toolbar .excel-btn { background:#2b63bf; color:#fff; border:none; border-radius:7px; padding:7px 19px; font-size:15px; font-weight:600; cursor:pointer; margin-left:15px;}
+    .table-wrap { background:#fff; border-radius:11px; box-shadow:0 1px 8px #ebedf1; padding:20px 24px 17px 24px; }
+    .log-table { width:100%; border-collapse:collapse;}
+    .log-table th, .log-table td { border-bottom:1px solid #e8ebf1; padding:7px 5px; font-size:14.7px; text-align:center;}
+    .log-table th { color:#46507d; background:#f6f8fd;}
+    .log-table td { background:#fff;}
+    .log-table td.event-login { color:#317a8c; font-weight:600;}
+    .log-table td.event-upload { color:#35747f; font-weight:600;}
+    .log-table td.event-download { color:#7a5e23; font-weight:600;}
+    .log-table td.event-edit { color:#a53d29; font-weight:600;}
+    .log-table td.result.fail { color:#c73030; font-weight:600;}
+    .log-table .detail-btn { background:#edf2fa; color:#2b63bf; border:none; border-radius:7px; padding:5px 14px; font-size:13.5px; font-weight:500; cursor:pointer; position:relative;}
+    .pagination { margin:16px 0 4px 0; text-align:center;}
+    .pagination button { margin:0 3px; border:none; background:#e6ebf6; border-radius:5px; padding:4px 12px; font-size:14px; cursor:pointer;}
+    .pagination button.active { background:#4367bd; color:#fff;}
+    /* 팝업 스타일 */
+    .popup-bg { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(25,35,50,0.22); display:flex; align-items:center; justify-content:center; z-index:10;}
+    .popup { background:#fff; border-radius:13px; box-shadow:0 7px 33px #b2c6e733; min-width:420px; max-width:520px; width:420px; padding:32px 34px 22px 34px; position:relative; }
+    .popup-title { font-size:20px; font-weight:700; margin-bottom:18px;}
+    .popup .close-x { position:absolute; top:13px; right:17px; font-size:26px; color:#adb2be; cursor:pointer;}
+    .popup ul { list-style:none; margin:0; padding:0;}
+    .popup li { margin-bottom:10px; font-size:15.5px; }
+    .popup li span.label { color:#57618a; min-width:60px; display:inline-block;}
+  </style>
+</head>
+<body>
+<script>
+  if (localStorage.getItem('cubig_login') !== 'Y') {
+    location.href = 'login.html';
+  }
+</script>
+<div class="admin-layout">
+  <aside class="sidebar">
+    <div class="company-name">주식회사 큐빅</div>
+    <nav>
+      <a href="https://wintryjay.github.io/for-references/02_00_dashBoard.html">
+        대시보드
+      </a>
+      <a href="https://wintryjay.github.io/for-references/03_00_serialAdmin.html">
+        라이선스 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/04_00_userAdmin.html" >
+        조직/사용자 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/05_00_usage.html">
+      사용 현황
+      </a>
+      <a href="https://wintryjay.github.io/for-references/06_00_promptAdmin.html">
+      대화 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/07_00_docAdmin.html">
+      문서 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/08_00_logAdmin.html" class="active">
+      활동 이력
+      </a>
+      <a href="https://wintryjay.github.io/for-references/09_00_notice.html">
+      공지 사항
+      </a>
+    </nav>
+  </aside>
+  <div class="main-content">
+    <header class="topbar">
+      <span class="contract">계약 만료일: 2025-12-31 (D-172)</span>
+      <span class="admin-info">홍길동 (관리자)</span>
+      <button class="logout-btn" onclick="logout()">로그아웃</button>
+    </header>
+    <div class="content-wrap">
+      <div class="section-title">활동 이력</div>
+      <!-- 위젯 -->
+      <div class="log-widgets" id="logWidgets">
+        <div class="log-widget all"><span class="log-label">전체 이력</span><span class="log-count" id="logAllCount">0</span></div>
+        <div class="log-widget login"><span class="log-label">로그인</span><span class="log-count" id="logLoginCount">0</span></div>
+        <div class="log-widget upload"><span class="log-label">문서 업로드</span><span class="log-count" id="logUploadCount">0</span></div>
+        <div class="log-widget download"><span class="log-label">문서 다운로드</span><span class="log-count" id="logDownloadCount">0</span></div>
+        <div class="log-widget edit"><span class="log-label">설정/수정</span><span class="log-count" id="logEditCount">0</span></div>
+      </div>
+      <!-- 필터/검색/다운로드 -->
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <select id="eventSel">
+            <option value="">전체유형</option>
+            <option value="login">로그인</option>
+            <option value="upload">문서 업로드</option>
+            <option value="download">문서 다운로드</option>
+            <option value="edit">설정/수정</option>
+          </select>
+          <select id="periodSel" onchange="setPeriod()">
+            <option value="all">전체</option>
+            <option value="today">오늘</option>
+            <option value="week">이번주</option>
+            <option value="month">이번달</option>
+            <option value="custom">직접 선택</option>
+          </select>
+          <input type="date" id="fromDate">
+          <span>~</span>
+          <input type="date" id="toDate">
+        </div>
+        <div class="toolbar-right">
+          <select class="search-select" id="searchType">
+            <option value="name">사용자명</option>
+            <option value="email">이메일</option>
+            <option value="target">대상</option>
+          </select>
+          <input type="text" id="searchInput" placeholder="검색어 입력">
+          <button class="search-btn" onclick="renderTable()">검색</button>
+          <button class="excel-btn" onclick="alert('엑셀 다운로드 샘플')">엑셀 다운로드</button>
+        </div>
+      </div>
+      <!-- 이력 테이블 -->
+      <div class="table-wrap">
+        <table class="log-table">
+          <thead>
+            <tr>
+              <th>부서</th>
+              <th>사용자명</th>
+              <th>이메일</th>
+              <th>유형</th>
+              <th>세부내용</th>
+              <th>일시</th>
+              <th>결과</th>
+              <th>IP</th>
+              <th>브라우저</th>
+            </tr>
+          </thead>
+          <tbody id="logTbody"></tbody>
+        </table>
+        <div class="pagination" id="logPagination"></div>
+      </div>
+    </div>
+  </div>
+  <!-- 상세 팝업 -->
+  <div class="popup-bg" id="logDetailPopup" style="display:none;">
+    <div class="popup">
+      <span class="close-x" onclick="closeLogDetail()">×</span>
+      <div class="popup-title">활동 상세 정보</div>
+      <ul id="logDetailList"></ul>
+    </div>
+  </div>
+</div>
+<script>
+  // 샘플 이력 데이터
+  const logs = [
+    {ts:"2024-07-12 13:24:51", name:"홍길동", email:"hong@cubig.ai", dept:"인사팀", event:"login", target:"-", result:"success", ip:"10.0.1.7", browser:"Chrome"},
+    {ts:"2024-07-12 13:27:15", name:"박수연", email:"suyeon@cubig.ai", dept:"재무팀", event:"upload", target:"2024_회계결산.pdf", result:"success", ip:"10.0.1.18", browser:"Edge"},
+    {ts:"2024-07-12 13:29:22", name:"이현우", email:"lee@cubig.ai", dept:"기술팀", event:"download", target:"23년 사업보고서.docx", result:"success", ip:"10.0.1.9", browser:"Chrome"},
+    {ts:"2024-07-12 13:30:42", name:"홍길동", email:"hong@cubig.ai", dept:"인사팀", event:"edit", target:"조직/사용자 등급", result:"success", ip:"10.0.1.7", browser:"Chrome"},
+    {ts:"2024-07-12 13:34:19", name:"김대리", email:"dari@cubig.ai", dept:"인사팀", event:"login", target:"-", result:"fail", ip:"10.0.1.13", browser:"Safari"},
+    {ts:"2024-07-12 13:38:00", name:"최유리", email:"yuri@cubig.ai", dept:"경영팀", event:"upload", target:"임원회의록.pdf", result:"success", ip:"10.0.1.19", browser:"Chrome"}
+  ];
+
+  // 오늘, 이번주, 이번달 날짜 계산 함수
+  function pad(n){return n<10?'0'+n:n}
+  function getToday(){let d=new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+  function getMonthFirst(){let d=new Date(); return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-01";}
+  function getMonthLast(){
+    let d=new Date();
+    let year = d.getFullYear();
+    let month = d.getMonth()+1;
+    let last = new Date(year, month, 0).getDate();
+    return year+"-"+pad(month)+"-"+pad(last);
+  }
+  function getWeekRange(){
+    let d = new Date();
+    let day = d.getDay() || 7;
+    let from = new Date(d);
+    from.setDate(d.getDate() - day + 1);
+    let to = new Date(from);
+    to.setDate(from.getDate() + 6);
+    return [
+      from.getFullYear()+"-"+pad(from.getMonth()+1)+"-"+pad(from.getDate()),
+      to.getFullYear()+"-"+pad(to.getMonth()+1)+"-"+pad(to.getDate())
+    ];
+  }
+  // 기간 선택 동작
+  function setPeriod() {
+    let val = document.getElementById("periodSel").value;
+    if(val=="today") {
+      document.getElementById("fromDate").value = getToday();
+      document.getElementById("toDate").value = getToday();
+    } else if(val=="week") {
+      let r = getWeekRange();
+      document.getElementById("fromDate").value = r[0];
+      document.getElementById("toDate").value = r[1];
+    } else if(val=="month") {
+      document.getElementById("fromDate").value = getMonthFirst();
+      document.getElementById("toDate").value = getMonthLast();
+    } else {
+      document.getElementById("fromDate").value = "";
+      document.getElementById("toDate").value = "";
+    }
+    renderTable();
+  }
+
+  // 위젯 집계
+  function calcWidgets() {
+    document.getElementById("logAllCount").innerText = logs.length;
+    document.getElementById("logLoginCount").innerText = logs.filter(x=>x.event==="login").length;
+    document.getElementById("logUploadCount").innerText = logs.filter(x=>x.event==="upload").length;
+    document.getElementById("logDownloadCount").innerText = logs.filter(x=>x.event==="download").length;
+    document.getElementById("logEditCount").innerText = logs.filter(x=>x.event==="edit").length;
+  }
+  // 테이블 렌더링
+  function renderTable() {
+    let tbody = document.getElementById("logTbody");
+    tbody.innerHTML = "";
+    let eventSel = document.getElementById("eventSel").value;
+    let searchType = document.getElementById("searchType").value;
+    let search = document.getElementById("searchInput").value.trim().toLowerCase();
+    let from = document.getElementById("fromDate").value, to = document.getElementById("toDate").value;
+    let filtered = logs.filter(log =>
+      (!eventSel || log.event===eventSel) &&
+      (!search || (searchType==="name" && log.name.includes(search)) || (searchType==="email" && log.email.includes(search)) || (searchType==="target" && log.target.includes(search))) &&
+      (!from || log.ts >= from) &&
+      (!to || log.ts <= to+" 23:59:59")
+    );
+    filtered.forEach((l, idx) => {
+      let eventStr = l.event==='login'?'로그인':l.event==='upload'?'문서 업로드':l.event==='download'?'문서 다운로드':'설정/수정';
+      tbody.innerHTML += `
+        <tr>
+          <td>${l.dept}</td>
+          <td>${l.name}</td>
+          <td>${l.email}</td>
+          <td class="event-${l.event}">${eventStr}</td>
+          <td>${l.target}</td>
+          <td>${l.ts}</td>
+          <td class="result ${l.result}">${l.result==='success'?'성공':'실패'}</td>
+          <td>${l.ip}</td>
+          <td>${l.browser}</td>
+        </tr>
+      `;
+    });
+    calcWidgets();
+  }
+  // 상세 팝업
+  function openLogDetail(idx) {
+    let l = logs[idx];
+    let html = `<li><span class="label">부서</span> ${l.dept}</li>
+      <li><span class="label">사용자명</span> ${l.name}</li>
+      <li><span class="label">이메일</span> ${l.email}</li>
+      <li><span class="label">유형</span> ${l.event==='login'?'로그인':l.event==='upload'?'문서 업로드':l.event==='download'?'문서 다운로드':'설정/수정'}</li>
+      <li><span class="label">세부내용</span> ${l.target}</li>
+      <li><span class="label">일시</span> ${l.ts}</li>
+      <li><span class="label">결과</span> ${l.result==='success'?'성공':'실패'}</li>
+      <li><span class="label">IP</span> ${l.ip}</li>
+      <li><span class="label">브라우저</span> ${l.browser}</li>
+    `;
+    document.getElementById("logDetailList").innerHTML = html;
+    document.getElementById("logDetailPopup").style.display = "";
+  }
+  function closeLogDetail() {
+    document.getElementById("logDetailPopup").style.display = "none";
+  }
+  function logout() {
+    localStorage.removeItem('cubig_login'); location.href='login.html';
+  }
+  window.onload = () => {
+    setPeriod();
+    renderTable();
+  };
+</script>
+</body>
+</html>
