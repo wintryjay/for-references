@@ -2,16 +2,33 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <title>라이선스(시리얼) 관리</title>
+  <title>고객사 어드민: 라이선스 관리</title>
   <meta name="viewport" content="width=1200">
   <style>
     body { margin:0; background:#f8fafd; font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; }
     .admin-layout { display: flex; height: 100vh; }
     .sidebar { width: 210px; background: #212b42; display: flex; flex-direction: column; color:#fff; min-width:52px; }
     .company-name { font-size:18.5px; font-weight:600; height:65px; display:flex; align-items:center; padding:0 24px; border-bottom:1px solid #344063;}
-    .sidebar ul { list-style:none; padding:0 10px; margin:0; }
-    .sidebar ul li { padding:13px 20px; font-size:15.5px; color:#e1e6f0; border-radius:6px; cursor:pointer; margin-bottom:4px; transition:.15s;}
-    .sidebar ul li.active, .sidebar ul li:hover { background:#2c3b5c; color:#fff; }
+    .sidebar nav { 
+      width: 100%; 
+    }
+    .sidebar nav a {
+      display: block; 
+      padding: 16px 32px; 
+      color: rgba(255,255,255,0.9); 
+      text-decoration: none;
+      font-size: 16px; 
+      font-weight: 500;
+      border-left: 4px solid transparent; 
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .sidebar nav a:hover,
+    .sidebar nav a.active { 
+      background: rgba(255,255,255,0.15);
+      border-left: 4px solid #ffffff; 
+      color: #ffffff;
+    }
     .main-content { flex:1; display:flex; flex-direction:column; }
     .topbar { background:#fff; height:65px; display:flex; align-items:center; justify-content:flex-end; padding:0 35px 0 0; border-bottom:1px solid #e5e8ef; gap:27px;}
     .contract { color:#2b63bf; font-size:15.5px; font-weight:600; }
@@ -83,50 +100,35 @@
 </script>
 <div class="admin-layout">
   <!-- 사이드바(좌측 메뉴) -->
-  <nav class="sidebar">
-    <div class="company-name">큐빅 주식회사</div>
-      <ul>
-        <li>
-          <a href="https://wintryjay.github.io/for-references/02_00_dashBoard.html">
-            대시보드
-          </a>
-        </li>
-        <li class="active">
-          <a href="https://wintryjay.github.io/for-references/03_00_serialAdmin.html">
-            라이선스 관리
-        </li>
-        <li>
-          <a href="https://wintryjay.github.io/for-references/04_00_userAdmin.html">
-            조직/사용자 관리
-          </a>
-        </li>
-        <li>
-          <a href="https://wintryjay.github.io/for-references/05_00_usage.html">
-          사용 현황
-          </a>
-        </li>
-        <li>
-          <a href="https://wintryjay.github.io/for-references/06_00_promptAdmin.html">
-          대화 관리
-          </a>
-        </li>
-        <li>
-          <a href="https://wintryjay.github.io/for-references/07_00_docAdmin.html">
-          문서 관리
-          </a>
-        </li>
-        <li>
-          <a href="https://wintryjay.github.io/for-references/08_00_logAdmin.html">
-          활동 이력
-          </a>
-        </li>
-        <li>
-          <a href="https://wintryjay.github.io/for-references/09_00_notice.html">
-          공지 사항
-          </a>
-        </li>
-      </ul>
-  </nav>
+  <aside class="sidebar">
+    <div class="company-name">주식회사 큐빅</div>
+    <nav>
+      <a href="https://wintryjay.github.io/for-references/02_00_dashBoard.html">
+        대시보드
+      </a>
+      <a href="https://wintryjay.github.io/for-references/03_00_serialAdmin.html" class="active">
+        라이선스 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/04_00_userAdmin.html">
+        조직/사용자 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/05_00_usage.html">
+      사용 현황
+      </a>
+      <a href="https://wintryjay.github.io/for-references/06_00_promptAdmin.html">
+      대화 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/07_00_docAdmin.html">
+      문서 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/08_00_logAdmin.html">
+      활동 이력
+      </a>
+      <a href="https://wintryjay.github.io/for-references/09_00_notice.html">
+      공지 사항
+      </a>
+      </nav>
+  </aside>
   <div class="main-content">
     <header class="topbar">
       <span class="contract">계약 만료일: 2025-12-31 (D-172)</span>
