@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>고객사 어드민:문서 관리</title>
+  <meta name="viewport" content="width=1200">
+  <style>
+    body { margin:0; background:#f8fafd; font-family:'Noto Sans KR',sans-serif; }
+    .admin-layout { display:flex; height:100vh; }
+    .sidebar { width:210px; background:#212b42; color:#fff;}
+    .company-name { font-size:18.5px; font-weight:600; height:65px; display:flex; align-items:center; padding:0 24px; border-bottom:1px solid #e5e8ef;}
+    .sidebar nav { 
+      width: 100%; 
+    }
+    .sidebar nav a {
+      display: block; 
+      padding: 16px 32px; 
+      color: rgba(255,255,255,0.9); 
+      text-decoration: none;
+      font-size: 16px; 
+      font-weight: 500;
+      border-left: 4px solid transparent; 
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .sidebar nav a:hover,
+    .sidebar nav a.active { 
+      background: rgba(255,255,255,0.15);
+      border-left: 4px solid #ffffff; 
+      color: #ffffff;
+    }
+    .main-content { flex:1; display:flex; flex-direction:column;}
+    .topbar { background:#fff; height:65px; display:flex; align-items:center; justify-content:flex-end;
+      box-sizing:border-box; padding:0 24px; border-bottom:1px solid #e5e8ef;}
+    .contract { color:#2b63bf; font-size:15.5px; font-weight:600;}
+    .admin-info { color:#333; font-size:15.3px;}
+    .logout-btn { font-size:14.3px; background:#3a4b7b; color:#fff; border:none; border-radius:7px; padding:7px 18px; font-weight:600; cursor:pointer; margin-left:12px;}
+    .content-wrap { padding:32px 38px 0 38px;}
+    .section-title { font-size:22px; font-weight:700; color:#25304e; margin-bottom:24px;}
+    .doc-widgets { display:flex; gap:19px; margin-bottom:19px;}
+    .doc-widget { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      background:#fff; border-radius:12px; box-shadow:0 1px 8px #ebedf1; padding:15px 0 13px 0; cursor:pointer;
+      border:2.3px solid transparent; transition:.18s; position:relative; min-width:0;}
+    .doc-widget.selected { border:2.3px solid #35747f; box-shadow:0 2px 15px #dde8fa;}
+    .doc-widget .doc-label { font-size:15.4px; font-weight:600; letter-spacing:-0.5px;}
+    .doc-widget .doc-count { font-size:23px; font-weight:700; margin-top:9px;}
+    .doc-widget.doc-all .doc-label { color:#1a2145;}
+    .doc-widget.doc-normal .doc-label { color:#2b63bf;}
+    .doc-widget.doc-expire .doc-label { color:#cb1e33;}
+    .doc-widget.doc-imminent .doc-label { color:#ff7a36;}
+    .doc-widget.doc-rag .doc-label { color:#35747f;}
+    .doc-widget.doc-always .doc-label { color:#297a6d;}
+    .doc-widget.doc-all .doc-count { color:#36455c;}
+    .doc-widget.doc-normal .doc-count { color:#2b63bf;}
+    .doc-widget.doc-expire .doc-count { color:#cb1e33;}
+    .doc-widget.doc-imminent .doc-count { color:#ff7a36;}
+    .doc-widget.doc-rag .doc-count { color:#35747f;}
+    .doc-widget.doc-always .doc-count { color:#297a6d;}
+    .toolbar { display:flex; align-items:center; gap:11px; margin-bottom:15px;}
+    .toolbar input, .toolbar select { font-size:15px; border-radius:7px; border:1px solid #c7d1e7; padding:7px 12px;}
+    .toolbar input[type="date"] { width:120px;}
+    .toolbar .upload-btn { background:#35747f; color:#fff; border:none; border-radius:7px; padding:7px 21px; font-size:15px; font-weight:600; cursor:pointer;}
+    .toolbar .search-btn { background:#f4f7fe; color:#4461b1; border:1px solid #b2bfdc; border-radius:7px; padding:7px 17px; font-size:15px; font-weight:600; cursor:pointer;}
+    .doc-page { display:flex; }
+    .category-panel { width:220px; background:#fff; border-radius:12px; box-shadow:0 1px 8px #ebedf1; margin-right:24px; padding:18px 15px; height:590px; box-sizing:border-box;}
+    .cat-title { font-size:15.8px; font-weight:600; color:#2e3b62; margin-bottom:13px;}
+    .cat-list { list-style:none; margin:0; padding:0;}
+    .cat-list li { padding:7px 4px 7px 13px; font-size:15.2px; color:#47678b; cursor:pointer; border-radius:6px; margin-bottom:4px;}
+    .cat-list li.selected, .cat-list li:hover { background:#f5f8fd; color:#3272b5; }
+    .table-wrap { background:#fff; border-radius:11px; box-shadow:0 1px 8px #ebedf1; padding:20px 24px 17px 24px; flex:1;}
+    .doc-table { width:100%; border-collapse:collapse;}
+    .doc-table th, .doc-table td { border-bottom:1px solid #e8ebf1; padding:7px 5px; font-size:14.7px; text-align:center;}
+    .doc-table th { color:#46507d; background:#f6f8fd;}
+    .doc-table td { background:#fff;}
+    .doc-table td.doc-title { text-align:left; padding-left:12px; max-width:260px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+    .doc-table td.status.expire { color:#cc1e33; font-weight:700;}
+    .doc-table td.status.imminent { color:#ff7a36; font-weight:700;}
+    .doc-table td.status.normal { color:#35747f; font-weight:700;}
+    .doc-table td.status.always { color:#297a6d; font-weight:700;}
+    .doc-table .manage-btn { background:#f6f2fe; color:#7a51c2; border:none; border-radius:7px; padding:6px 15px; font-size:14px; cursor:pointer;}
+    .doc-table .manage-btn:hover { background:#e8e2fb;}
+    .doc-table .auth-view-btn { background:#edf2fa; color:#2b63bf; border:none; border-radius:7px; padding:5px 14px; font-size:13.5px; font-weight:500; cursor:pointer; position:relative;}
+    .auth-tooltip { position:fixed; min-width:170px; background:#fff; border:1.2px solid #b8c9ef; box-shadow:0 2px 14px #e2ecff; border-radius:9px; z-index:10000; padding:12px 17px; font-size:14.3px; color:#223a5e; }
+    .auth-tooltip ul { list-style:none; margin:0; padding:0;}
+    .auth-tooltip li { margin-bottom:4px; }
+    .auth-tooltip li:last-child { margin-bottom:0;}
+    .pagination { margin:16px 0 4px 0; text-align:center;}
+    .pagination button { margin:0 3px; border:none; background:#e6ebf6; border-radius:5px; padding:4px 12px; font-size:14px; cursor:pointer;}
+    .pagination button.active { background:#4367bd; color:#fff;}
+    /* 팝업 스타일 */
+    .popup-bg { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(25,35,50,0.22); display:flex; align-items:center; justify-content:center; z-index:10;}
+    .popup { background:#fff; border-radius:13px; box-shadow:0 7px 33px #b2c6e733; min-width:580px; max-width:780px; width:680px; padding:36px 38px 26px 38px; position:relative; }
+    .popup-title { font-size:20px; font-weight:700; margin-bottom:24px;}
+    .popup label { display:block; margin-bottom:8px; font-size:15.5px; font-weight:500;}
+    .popup input[type="text"], .popup input[type="date"], .popup select { width:100%; font-size:15px; padding:7px 11px; border-radius:7px; border:1px solid #c1c9db; margin-bottom:17px; }
+    .popup .inline-wrap { display:flex; gap:40px;}
+    .popup .inline-half { width:50%; }
+    .popup .inline-quarter { width:24%; display:inline-block;}
+    .popup .auth-group { margin-bottom:15px;}
+    .popup .auth-chips { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:9px;}
+    .popup .chip { background:#dde6fa; color:#325fc1; border-radius:14px; padding:3px 13px; font-size:14px; margin-bottom:4px; }
+    .popup .chip .del-x { margin-left:5px; color:#888; cursor:pointer;}
+    /* 드래그앤드랍 영역 */
+    .file-drop-area { border:2px dashed #a4b8e3; border-radius:9px; background:#f6f8fd; text-align:center; padding:28px 0 20px 0; margin-bottom:18px; color:#4a62a8; font-size:15px; transition:.2s;}
+    .file-drop-area.dragover { border-color:#35747f; background:#e6f3fc;}
+    .popup .toggle-wrap { display:flex; align-items:center; margin-bottom:17px; }
+    .popup .toggle-label { font-size:15px; margin-right:11px;}
+    .toggle-btn { width:44px; height:24px; border-radius:14px; background:#d2dde6; position:relative; cursor:pointer; margin-right:7px; transition:.17s;}
+    .toggle-btn.on { background:#2b63bf; }
+    .toggle-btn .ball { position:absolute; top:2.5px; left:3px; width:19px; height:19px; border-radius:50%; background:#fff; transition:.18s;}
+    .toggle-btn.on .ball { left:21px; }
+    .popup .custom-folder-wrap { display:flex; gap:7px;}
+    .popup .custom-folder-wrap input { flex:1; margin-bottom:0;}
+    .popup .custom-folder-wrap button { background:#eee; border:none; border-radius:7px; padding:7px 14px; cursor:pointer; font-size:14px;}
+    .popup .date-always-wrap { display:flex; align-items:center; gap:9px; }
+    .popup .date-always-wrap label { margin-bottom:0; }
+    .popup .always-check { margin-left:4px; }
+    .popup .user-search-wrap { position:relative;}
+    .popup .user-search-list { position:absolute; left:0; top:100%; background:#fff; border:1px solid #c1c9db; width:100%; z-index:10; border-radius:7px; max-height:140px; overflow-y:auto;}
+    .popup .user-search-list li { padding:6px 11px; cursor:pointer; }
+    .popup .user-search-list li:hover { background:#f1f6fe;}
+    .popup .chips-wrap { display:flex; gap:6px; flex-wrap:wrap; margin-top:3px;}
+    .popup .chip { background:#dde6fa; color:#325fc1; border-radius:13px; padding:3px 10px 3px 13px; font-size:14px;}
+    .popup .chip .del-x { margin-left:5px; color:#888; cursor:pointer;}
+  </style>
+</head>
+<body>
+<script>
+  if (localStorage.getItem('cubig_login') !== 'Y') {
+    location.href = 'login.html';
+  }
+</script>
+<div class="admin-layout">
+  <aside class="sidebar">
+    <div class="company-name">주식회사 큐빅</div>
+    <nav>
+      <a href="https://wintryjay.github.io/for-references/02_00_dashBoard.html">
+        대시보드
+      </a>
+      <a href="https://wintryjay.github.io/for-references/03_00_serialAdmin.html">
+        라이선스 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/04_00_userAdmin.html" >
+        조직/사용자 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/05_00_usage.html">
+      사용 현황
+      </a>
+      <a href="https://wintryjay.github.io/for-references/06_00_promptAdmin.html">
+      대화 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/07_00_docAdmin.html" class="active">
+      문서 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/08_00_logAdmin.html">
+      활동 이력
+      </a>
+      <a href="https://wintryjay.github.io/for-references/09_00_notice.html">
+      공지 사항
+      </a>
+    </nav>
+  </aside>
+  <div class="main-content">
+    <header class="topbar">
+      <span class="contract">계약 만료일: 2025-12-31 (D-172)</span>
+      <span class="admin-info">홍길동 (관리자)</span>
+      <button class="logout-btn" onclick="logout()">로그아웃</button>
+    </header>
+    <div class="content-wrap">
+      <div class="section-title">문서 관리</div>
+      <!-- 문서 위젯 -->
+      <div class="doc-widgets" id="docWidgets">
+        <div class="doc-widget doc-all selected"><span class="doc-label">전체 문서</span><span class="doc-count" id="docAllCount">0</span></div>
+        <div class="doc-widget doc-normal" id="docNormalWidget" style="display:none;"><span class="doc-label">정상</span><span class="doc-count" id="docNormalCount">0</span></div>
+        <div class="doc-widget doc-imminent" id="docImminentWidget" style="display:none;"><span class="doc-label">만료 임박</span><span class="doc-count" id="docImminentCount">0</span></div>
+        <div class="doc-widget doc-expire" id="docExpireWidget" style="display:none;"><span class="doc-label">만료됨</span><span class="doc-count" id="docExpireCount">0</span></div>
+        <div class="doc-widget doc-always" id="docAlwaysWidget" style="display:none;"><span class="doc-label">항상 공유</span><span class="doc-count" id="docAlwaysCount">0</span></div>
+        <div class="doc-widget doc-rag" id="docRagWidget" style="display:none;"><span class="doc-label">RAG 반영</span><span class="doc-count" id="docRagCount">0</span></div>
+      </div>
+      <!-- 검색/필터/업로드 -->
+      <div class="toolbar">
+        <input type="text" id="searchInput" placeholder="문서명/업로더 검색" style="width:170px;">
+        <select id="statusSel">
+          <option value="">상태 전체</option>
+          <option value="normal">정상</option>
+          <option value="imminent">만료 임박</option>
+          <option value="expire">만료됨</option>
+          <option value="always">항상 공유</option>
+        </select>
+        <input type="date" id="fromDate">
+        <span>~</span>
+        <input type="date" id="toDate">
+        <button class="search-btn" onclick="renderTable()">검색</button>
+        <button class="upload-btn" onclick="openUploadPopup()" style="margin-left:auto;">문서 업로드</button>
+      </div>
+      <!-- 본문 -->
+      <div class="doc-page">
+        <!-- 우측 폴더/카테고리 패널 -->
+        <div class="category-panel">
+          <div class="cat-title">분류(폴더)</div>
+          <ul class="cat-list" id="catList">
+            <li class="selected">전체</li>
+            <li>인사/총무</li>
+            <li>재무/회계</li>
+            <li>법무/계약</li>
+            <li>기술/개발</li>
+            <li>마케팅/영업</li>
+            <li>경영/전략</li>
+          </ul>
+        </div>
+        <!-- 테이블 -->
+        <div class="table-wrap">
+          <table class="doc-table">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>문서명</th>
+                <th>업로더</th>
+                <th class="grade">등급</th>
+                <th>상태</th>
+                <th>만료일</th>
+                <th>RAG</th>
+                <th>권한</th>
+                <th>관리</th>
+              </tr>
+            </thead>
+            <tbody id="docTbody"></tbody>
+          </table>
+          <div class="pagination" id="docPagination"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 문서 업로드 팝업 -->
+  <div class="popup-bg" id="uploadPopup" style="display:none;">
+    <div class="popup" style="max-width:780px;width:680px;">
+      <span class="close-x" onclick="closeUploadPopup()">×</span>
+      <div class="popup-title">문서 업로드</div>
+      <form onsubmit="saveUpload();return false;">
+        <!-- 파일 드랍 -->
+        <div class="file-drop-area" id="fileDropArea" onclick="fileInput.click()" ondragover="event.preventDefault();this.classList.add('dragover')" ondragleave="this.classList.remove('dragover')" ondrop="dropFile(event)">
+          <input type="file" id="fileInput" style="display:none;" onchange="selectFile(event)">
+          <span id="fileDropText">파일을 선택 또는 여기로 드래그앤드랍</span>
+        </div>
+        <div class="inline-wrap">
+          <!-- 왼쪽: 정보 -->
+          <div class="inline-half">
+            <label>문서명</label>
+            <input type="text" id="uploadTitle" required>
+            <label>업로더</label>
+            <input type="text" id="uploadUploader" required>
+            <label>등급</label>
+            <select id="uploadGrade">
+              <option>일반</option><option>기밀</option><option>프로젝트 한정</option><option>최고기밀</option>
+            </select>
+            <label>분류(폴더)</label>
+            <div class="custom-folder-wrap">
+              <select id="uploadFolder" onchange="customFolder()">
+                <option>인사/총무</option>
+                <option>재무/회계</option>
+                <option>법무/계약</option>
+                <option>기술/개발</option>
+                <option>마케팅/영업</option>
+                <option>경영/전략</option>
+                <option value="custom">직접입력</option>
+              </select>
+              <input type="text" id="folderCustomInput" style="display:none;" placeholder="직접 입력">
+            </div>
+            <label>만료일</label>
+            <div class="date-always-wrap">
+              <input type="date" id="uploadExpire">
+              <label><input type="checkbox" id="alwaysShare" onchange="alwaysChange()"> 상시</label>
+            </div>
+          </div>
+          <!-- 오른쪽: 권한 -->
+          <div class="inline-half">
+            <label>부서</label>
+            <select id="uploadDept">
+              <option>전체</option><option>인사팀</option><option>재무팀</option><option>마케팅팀</option><option>임원</option>
+            </select>
+            <label>등급</label>
+            <select id="uploadLevel">
+              <option>전체</option><option>임원</option><option>매니저</option><option>직원</option>
+            </select>
+            <label>사용자</label>
+            <div class="user-search-wrap">
+              <input type="text" id="userSearchInput" placeholder="사용자 이메일 검색" oninput="searchUser()">
+              <ul class="user-search-list" id="userSearchList" style="display:none;"></ul>
+              <div class="chips-wrap" id="selectedUsers"></div>
+            </div>
+            <label class="toggle-label">RAG 적용</label>
+            <div class="toggle-btn" id="ragToggle" onclick="toggleRag()"><div class="ball"></div></div>
+          </div>
+        </div>
+        <div class="popup-btns" style="margin-top:22px; text-align:center;">
+          <button type="submit" style="background:#35747f;color:#fff;border:none;border-radius:7px;padding:8px 37px;font-size:15px;font-weight:600;">저장</button>
+          <button type="button" class="cancel" onclick="closeUploadPopup()" style="background:#35747f;color:#fff;border:none;border-radius:7px;padding:8px 37px;font-size:15px;font-weight:600;">취소</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- 문서 관리(상세) 팝업 -->
+  <div class="popup-bg" id="managePopup" style="display:none;">
+    <div class="popup">
+      <span class="close-x" onclick="closeManagePopup()">×</span>
+      <div class="popup-title">문서 상세 정보</div>
+      <ul class="doc-info-list" id="manageInfo"></ul>
+      <div class="popup-btns">
+        <button onclick="editManage()" class="edit">수정</button>
+        <button onclick="closeManagePopup()" class="cancel">닫기</button>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  // 로그인 체크
+  if (localStorage.getItem('cubig_login') !== 'Y') location.href = 'login.html';
+  // 샘플 사용자 목록
+  const userList = ['test1@cubig.ai','test2@cubig.ai','admin@cubig.ai','kyle@cubig.ai','manager@cubig.ai'];
+  // 문서 데이터
+  const docs = [
+    {title:"23년 사업보고서.docx", uploader:"홍길동", grade:"기밀", status:"normal", expire:"2025-12-31", rag:true, always:false, auth:"인사팀,임원", folder:"경영/전략"},
+    {title:"연말정산 FAQ.hwp", uploader:"최유리", grade:"일반", status:"expire", expire:"2024-05-23", rag:false, always:false, auth:"전체", folder:"재무/회계"},
+    {title:"수습평가표.pdf", uploader:"박수연", grade:"프로젝트 한정", status:"imminent", expire:"2024-08-12", rag:true, always:false, auth:"인사팀,임원,대표", folder:"인사/총무"},
+    {title:"AI기술백서.pdf", uploader:"이현우", grade:"최고기밀", status:"normal", expire:"2025-11-01", rag:true, always:false, auth:"대표,임원,연구팀", folder:"기술/개발"},
+    {title:"항상공유문서.pdf", uploader:"한정수", grade:"일반", status:"always", expire:"-", rag:true, always:true, auth:"전체", folder:"인사/총무"},
+  ];
+  let openAuthTip = null;
+  // 위젯
+  function calcWidgets() {
+    let all = docs.length;
+    let normal = docs.filter(d=>d.status==='normal').length;
+    let imminent = docs.filter(d=>d.status==='imminent').length;
+    let expire = docs.filter(d=>d.status==='expire').length;
+    let always = docs.filter(d=>d.status==='always').length;
+    let rag = docs.filter(d=>d.rag).length;
+    document.getElementById("docAllCount").innerText = all;
+    document.getElementById("docNormalCount").innerText = normal;
+    document.getElementById("docImminentCount").innerText = imminent;
+    document.getElementById("docExpireCount").innerText = expire;
+    document.getElementById("docAlwaysCount").innerText = always;
+    document.getElementById("docRagCount").innerText = rag;
+    // 위젯 노출
+    document.getElementById("docNormalWidget").style.display = normal>0?"":"none";
+    document.getElementById("docImminentWidget").style.display = imminent>0?"":"none";
+    document.getElementById("docExpireWidget").style.display = expire>0?"":"none";
+    document.getElementById("docAlwaysWidget").style.display = always>0?"":"none";
+    document.getElementById("docRagWidget").style.display = rag>0?"":"none";
+  }
+  // 테이블 렌더링
+  function renderTable() {
+    let tbody = document.getElementById("docTbody");
+    tbody.innerHTML = "";
+    let statusSel = document.getElementById("statusSel").value;
+    let search = document.getElementById("searchInput").value;
+    let filtered = docs.filter(d =>
+      (!statusSel || d.status === statusSel) &&
+      (!search || d.title.includes(search) || d.uploader.includes(search))
+    );
+    filtered.forEach((d, idx) => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${idx+1}</td>
+          <td class="doc-title" title="${d.title}">${d.title}</td>
+          <td>${d.uploader}</td>
+          <td class="grade">${d.grade}</td>
+          <td class="status ${d.status}">${d.status==='normal'?'정상':d.status==='imminent'?'만료임박':d.status==='expire'?'만료됨':'항상 공유'}</td>
+          <td>${d.expire}</td>
+          <td>${d.rag?'O':'X'}</td>
+          <td>
+            <button class="auth-view-btn" onclick="showAuthTip(this,'${d.auth.replace(/'/g,"\\'")}')">보기</button>
+          </td>
+          <td>
+            <button class="manage-btn" onclick="openManagePopup(${idx})">관리</button>
+          </td>
+        </tr>
+      `;
+    });
+    calcWidgets();
+  }
+  // 권한 툴팁
+  function showAuthTip(btn, auth){
+    closeAuthTip();
+    const list = auth.split(',').map(a=>a.trim()).filter(Boolean);
+    let html = '<div class="auth-tooltip"><ul>';
+    if(list.length==0) html += '<li>권한 없음</li>';
+    else list.forEach(a=>{ html += `<li>${a}</li>`; });
+    html += '</ul></div>';
+    document.body.insertAdjacentHTML('beforeend', html);
+    openAuthTip = document.body.lastChild;
+    const rect = btn.getBoundingClientRect();
+    openAuthTip.style.top = (window.scrollY + rect.bottom + 6) + "px";
+    openAuthTip.style.left = (window.scrollX + rect.left) + "px";
+    setTimeout(()=>document.addEventListener('mousedown', closeAuthTipEvent, {once:true}),0);
+  }
+  function closeAuthTipEvent(e){ if(openAuthTip && !openAuthTip.contains(e.target)) closeAuthTip(); }
+  function closeAuthTip(){ if(openAuthTip && openAuthTip.parentNode) openAuthTip.parentNode.removeChild(openAuthTip); openAuthTip = null;}
+  // 파일 드랍 & 선택
+  function dropFile(e) {
+    e.preventDefault();
+    let files = e.dataTransfer.files;
+    if (files.length) selectFile({target:{files}});
+    document.getElementById("fileDropArea").classList.remove("dragover");
+  }
+  function selectFile(e){
+    const file = e.target.files[0];
+    if(file) document.getElementById("fileDropText").innerText = file.name + " 선택됨";
+    else document.getElementById("fileDropText").innerText = "파일을 선택 또는 여기로 드래그앤드랍";
+  }
+  // 업로드 팝업
+  function openUploadPopup() {
+    document.getElementById("uploadPopup").style.display = "";
+    document.getElementById("uploadTitle").value = "";
+    document.getElementById("uploadUploader").value = "";
+    document.getElementById("uploadGrade").value = "일반";
+    document.getElementById("uploadFolder").value = "인사/총무";
+    document.getElementById("folderCustomInput").style.display="none";
+    document.getElementById("uploadExpire").disabled = false;
+    document.getElementById("alwaysShare").checked = false;
+    let today = new Date();
+    let d30 = new Date(today.getTime()+1000*60*60*24*30);
+    document.getElementById("uploadExpire").value = d30.toISOString().slice(0,10);
+    document.getElementById("userSearchInput").value = "";
+    document.getElementById("selectedUsers").innerHTML = "";
+    document.getElementById("ragToggle").classList.remove("on");
+    selectedUsersArr = [];
+  }
+  function closeUploadPopup() { document.getElementById("uploadPopup").style.display = "none";}
+  function customFolder(){
+    let sel = document.getElementById("uploadFolder");
+    let input = document.getElementById("folderCustomInput");
+    input.style.display = sel.value === "custom"?"":"none";
+  }
+  // 상시 체크박스 변경
+  function alwaysChange(){
+    let checked = document.getElementById("alwaysShare").checked;
+    document.getElementById("uploadExpire").disabled = checked;
+  }
+  // RAG 토글
+  function toggleRag(){
+    document.getElementById("ragToggle").classList.toggle("on");
+  }
+  // 사용자 검색 및 멀티선택
+  let selectedUsersArr = [];
+  function searchUser(){
+    let val = document.getElementById("userSearchInput").value.trim();
+    let list = userList.filter(u=>u.includes(val) && !selectedUsersArr.includes(u));
+    let ul = document.getElementById("userSearchList");
+    ul.innerHTML = "";
+    if(val && list.length){
+      ul.style.display="";
+      list.forEach(u=>{
+        let li = document.createElement("li");
+        li.innerText = u;
+        li.onclick = function(){
+          selectedUsersArr.push(u);
+          document.getElementById("selectedUsers").innerHTML = selectedUsersArr.map(usr=>`<span class="chip">${usr}<span class="del-x" onclick="removeUser('${usr}')">×</span></span>`).join("");
+          ul.style.display="none";
+          document.getElementById("userSearchInput").value = "";
+        };
+        ul.appendChild(li);
+      });
+    }else{
+      ul.style.display="none";
+    }
+  }
+  function removeUser(u){
+    selectedUsersArr = selectedUsersArr.filter(su=>su!==u);
+    document.getElementById("selectedUsers").innerHTML = selectedUsersArr.map(usr=>`<span class="chip">${usr}<span class="del-x" onclick="removeUser('${usr}')">×</span></span>`).join("");
+  }
+  // 저장
+  function saveUpload() {
+    let title = document.getElementById("uploadTitle").value.trim();
+    let uploader = document.getElementById("uploadUploader").value.trim();
+    let grade = document.getElementById("uploadGrade").value;
+    let expire = document.getElementById("uploadExpire").value;
+    let always = document.getElementById("alwaysShare").checked;
+    let rag = document.getElementById("ragToggle").classList.contains("on");
+    let folderSel = document.getElementById("uploadFolder").value;
+    let folder = folderSel==="custom"?document.getElementById("folderCustomInput").value.trim():folderSel;
+    let dept = document.getElementById("uploadDept").value;
+    let level = document.getElementById("uploadLevel").value;
+    let authArr = [];
+    if(dept!=="전체") authArr.push(dept);
+    if(level!=="전체") authArr.push(level);
+    if(selectedUsersArr.length) authArr = authArr.concat(selectedUsersArr);
+    let auth = authArr.length ? authArr.join(','):"전체";
+    if (!title || !uploader) return alert("필수값을 입력하세요!");
+    let today = new Date();
+    let status = "normal";
+    if(always){
+      expire="-";
+      status="always";
+    }else{
+      let dday = (new Date(expire)-today)/(1000*60*60*24);
+      status = dday < 0 ? "expire" : (dday<=30?"imminent":"normal");
+    }
+    docs.unshift({title, uploader, grade, status, expire, rag, always, auth, folder});
+    closeUploadPopup();
+    renderTable();
+    return false;
+  }
+  // 문서 상세
+  function openManagePopup(idx) {
+    let d = docs[idx];
+    let info = `<li><span>문서명</span> ${d.title}</li>
+    <li><span>업로더</span> ${d.uploader}</li>
+    <li><span>등급</span> ${d.grade}</li>
+    <li><span>만료일</span> ${d.expire}</li>
+    <li><span>상태</span> <span class="doc-status-label ${d.status}">${d.status==='normal'?'정상':d.status==='imminent'?'만료임박':d.status==='expire'?'만료됨':'항상 공유'}</span></li>
+    <li><span>RAG</span> <span class="rag-label">${d.rag?'적용':'미적용'}</span></li>
+    <li><span>분류</span> ${d.folder}</li>
+    <li><span>권한</span> ${d.auth}</li>`;
+    document.getElementById("manageInfo").innerHTML = info;
+    document.getElementById("managePopup").style.display = "";
+  }
+  function closeManagePopup() { document.getElementById("managePopup").style.display = "none"; }
+  function editManage() { alert("수정 기능은 추가 구현 필요"); }
+  function logout() { localStorage.removeItem('cubig_login'); location.href='login.html'; }
+  window.onload = renderTable;
+</script>
+</body>
+</html>
