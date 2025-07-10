@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>고객사 어드민:사용현황</title>
+  <meta name="viewport" content="width=1200">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { margin:0; background:#f8fafd; font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif; }
+    .admin-layout { display: flex; height: 100vh; }
+    .sidebar { width: 210px; background: #212b42; display: flex; flex-direction: column; color:#fff; min-width:52px; }
+    .company-name { font-size:18.5px; font-weight:600; height:65px; display:flex; align-items:center; padding:0 24px; border-bottom:1px solid #344063;}
+    .sidebar nav { 
+      width: 100%; 
+    }
+    .sidebar nav a {
+      display: block; 
+      padding: 16px 32px; 
+      color: rgba(255,255,255,0.9); 
+      text-decoration: none;
+      font-size: 16px; 
+      font-weight: 500;
+      border-left: 4px solid transparent; 
+      transition: all 0.3s ease;
+      position: relative;
+    }
+    .sidebar nav a:hover,
+    .sidebar nav a.active { 
+      background: rgba(255,255,255,0.15);
+      border-left: 4px solid #ffffff; 
+      color: #ffffff;
+    }
+    .main-content { flex:1; display:flex; flex-direction:column; }
+    .topbar { background:#fff; height:65px; display:flex; align-items:center; justify-content:flex-end; padding:0 35px 0 0; border-bottom:1px solid #e5e8ef; gap:27px;}
+    .contract { color:#2b63bf; font-size:15.5px; font-weight:600; }
+    .admin-info { color:#333; font-size:15.3px; }
+    .edit-btn { font-size:12.5px; margin-left:7px; background:#f4f7fe; border:none; border-radius:5px; padding:2.5px 9px; cursor:pointer; color:#4461b1;}
+    .logout-btn { font-size:14.3px; background:#3a4b7b; color:#fff; border:none; border-radius:7px; padding:7px 18px; font-weight:600; cursor:pointer; margin-left:12px;}
+    .content-wrap { padding:32px 38px 0 38px; }
+    .section-title { font-size:22px; font-weight:700; color:#25304e; margin-bottom:24px;}
+    .widget-bar { display:flex; gap:22px; margin-bottom:29px;}
+    .widget { flex:1; background:#fff; border-radius:9px; box-shadow:0 1px 8px #ebedf1; padding:18px 0 16px 0; display:flex; flex-direction:column; align-items:center; justify-content:center;}
+    .widget .w-title { font-size:15.7px; font-weight:500; color:#4a5a84; margin-bottom:7px;}
+    .widget .w-count { font-size:22px; font-weight:700; color:#274dc1;}
+    .pivot-bar-row { display:flex; align-items:center; margin-bottom:15px;}
+    .pivot-bar { display:flex; align-items:center; gap:15px; flex:1;}
+    .pivot-bar label { font-weight:500; font-size:15.2px; margin-right:5px;}
+    .pivot-bar select, .pivot-bar input[type="date"] { font-size:15px; border-radius:7px; border:1px solid #c7d1e7; padding:6px 11px;}
+    .pivot-bar .multi-select { min-width:130px; border:1px solid #bbc9eb; border-radius:7px; padding:5px 8px 5px 10px; background:#f7fafd; font-size:15px; display:inline-block; cursor:pointer; position:relative;}
+    .multi-options { display:none; position:absolute; left:0; top:110%; background:#fff; border:1px solid #bfcfea; border-radius:8px; min-width:210px; max-height:270px; overflow:auto; z-index:15; font-size:15px; box-shadow:0 6px 20px #e1e6f3;}
+    .multi-options label { display:flex; align-items:center; padding:7px 13px;}
+    .multi-options label:hover { background:#eef2f9;}
+    .multi-search { width:90%; margin:7px auto 3px auto; display:block; padding:5px 7px; border-radius:5px; border:1px solid #c7d1e7; font-size:14.7px; }
+    .multi-selected-tags { display:flex; flex-wrap:wrap; gap:4px; margin-top:3px;}
+    .multi-tag { background:#e7edfa; color:#2052b2; border-radius:13px; padding:3.5px 11px 3.5px 10px; font-size:14px; display:inline-flex; align-items:center; }
+    .multi-tag .remove-x { margin-left:5px; color:#c22; font-size:13px; font-weight:bold; cursor:pointer;}
+    .pivot-bar .chart-type-btn { margin-left:10px; font-size:15px; padding:3px 12px 2px 12px; border-radius:7px; border:1.5px solid #bbc9eb; background:#f3f8ff; cursor:pointer; font-weight:600;}
+    .pivot-bar .chart-type-btn.active { background:#2d6edb; color:#fff; border-color:#264ba3;}
+    .download-btn { background:#3464c4; color:#fff; border:none; border-radius:7px; padding:7px 17px; font-size:15px; font-weight:600; cursor:pointer; margin-left:auto;}
+    .chart-area-row { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 23px;}
+    .chart-wrap { background:#fff; border-radius:11px; box-shadow:0 1px 8px #ebedf1; padding:20px 28px 15px 28px; margin-bottom:0; flex:1;}
+    .chart-title-bar { display:flex; align-items:center; justify-content:space-between; }
+    .chart-title { font-size:16.7px; font-weight:600; }
+    .table-wrap { background:#fff; border-radius:11px; box-shadow:0 1px 8px #ebedf1; padding:20px 24px 17px 24px; margin-top:28px;}
+    .usage-table { width:100%; border-collapse:collapse;}
+    .usage-table th, .usage-table td { border-bottom:1px solid #e8ebf1; padding:7px 5px; font-size:14.7px; text-align:center;}
+    .usage-table th { color:#46507d; background:#f6f8fd;}
+    .usage-table td { background:#fff;}
+    .usage-table td.num { font-family: 'Roboto', 'Noto Sans KR', monospace;}
+    .date-range-group { display:flex; align-items:center; gap:7px;}
+    .custom-date-range { display:inline-flex; align-items:center; gap:5px;}
+    .custom-date-range input[type="date"] { width:123px;}
+    @media (max-width:1300px){
+      .content-wrap{padding:18px 10px 0 10px;}
+      .widget-bar{gap:10px;}
+    }
+  </style>
+</head>
+<body>
+<script>
+  if (localStorage.getItem('cubig_login') !== 'Y') {
+    location.href = 'login.html';
+  }
+</script>
+<div class="admin-layout">
+  <aside class="sidebar">
+    <div class="company-name">주식회사 큐빅</div>
+    <nav>
+      <a href="https://wintryjay.github.io/for-references/02_00_dashBoard.html">
+        대시보드
+      </a>
+      <a href="https://wintryjay.github.io/for-references/03_00_serialAdmin.html">
+        라이선스 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/04_00_userAdmin.html" >
+        조직/사용자 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/05_00_usage.html" class="active">
+      사용 현황
+      </a>
+      <a href="https://wintryjay.github.io/for-references/06_00_promptAdmin.html">
+      대화 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/07_00_docAdmin.html">
+      문서 관리
+      </a>
+      <a href="https://wintryjay.github.io/for-references/08_00_logAdmin.html">
+      활동 이력
+      </a>
+      <a href="https://wintryjay.github.io/for-references/09_00_notice.html">
+      공지 사항
+      </a>
+    </nav>
+  </aside>
+  <div class="main-content">
+    <header class="topbar">
+      <span class="contract">계약 만료일: 2025-12-31 (D-172)</span>
+      <span class="admin-info">홍길동 (관리자) <button class="edit-btn">내 정보 수정</button></span>
+      <button class="logout-btn" onclick="logout()">로그아웃</button>
+    </header>
+    <div class="content-wrap">
+      <div class="section-title">사용 현황</div>
+      <!-- 상단 위젯 -->
+      <div class="widget-bar" id="widgetBar"></div>
+
+      <!-- 피벗 바 + 엑셀 다운로드 버튼 한줄에 배치 -->
+      <div class="pivot-bar-row">
+        <div class="pivot-bar">
+          <label>기간</label>
+          <select id="datePreset" onchange="onPresetChange()">
+            <option value="today">오늘</option>
+            <option value="week">이번주</option>
+            <option value="month">이번달</option>
+            <option value="custom">직접선택</option>
+          </select>
+          <span class="custom-date-range" id="customDateRange">
+            <input type="date" id="dateFrom" onchange="renderAll()">
+            <span>~</span>
+            <input type="date" id="dateTo" onchange="renderAll()">
+          </span>
+          <label>분석방식</label>
+          <select id="pivotType" onchange="onPivotTypeChange()">
+            <option value="org">조직 기준</option>
+            <option value="user">사용자 기준</option>
+          </select>
+          <!-- 2차 멀티선택 영역 -->
+          <span id="pivotSubSel" style="position:relative;"></span>
+          <label style="margin-left:16px;">측정항목</label>
+          <label><input type="checkbox" id="chkIn" checked onchange="renderAll()">입력 토큰</label>
+          <label><input type="checkbox" id="chkOut" checked onchange="renderAll()">출력 토큰</label>
+          <label><input type="checkbox" id="chkTotal" checked onchange="renderAll()">전체 토큰</label>
+          <label style="margin-left:18px;">출력 형식</label>
+          <select id="chartTypeSel" onchange="onChartTypeChange()" style="width:110px;">
+            <option value="bar">막대그래프</option>
+            <option value="line">선형그래프</option>
+          </select>
+        </div>
+        <button class="download-btn" onclick="downloadTable()">엑셀 다운로드</button>
+      </div>
+
+      <div class="chart-area-row">
+        <div class="chart-wrap">
+          <div class="chart-title-bar">
+            <span class="chart-title">토큰 사용량 분석</span>
+          </div>
+          <canvas id="usageChart" height="100"></canvas>
+        </div>
+      </div>
+      <!-- 테이블 -->
+      <div class="table-wrap">
+        <table class="usage-table">
+          <thead>
+            <tr>
+              <th>일자</th>
+              <th>조직/부서</th>
+              <th>이름</th>
+              <th>입력 토큰</th>
+              <th>출력 토큰</th>
+              <th>전체 토큰</th>
+              <th>예상 요금(원)</th>
+            </tr>
+          </thead>
+          <tbody id="usageTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+  function logout() {
+    localStorage.removeItem('cubig_login');
+    location.href = 'login.html';
+  }
+
+  // 샘플 조직/팀/사용자
+  const orgs = ["개발팀", "경영지원", "마케팅", "IT운영"];
+  const users = [
+    {name:"홍길동", email:"hong@cubig.ai", org:"개발팀"},
+    {name:"김진아", email:"jina@cubig.ai", org:"개발팀"},
+    {name:"박민지", email:"mjpark@cubig.ai", org:"경영지원"},
+    {name:"김태연", email:"tykim@cubig.ai", org:"마케팅"},
+    {name:"임태호", email:"thlim@cubig.ai", org:"IT운영"},
+    {name:"이지훈", email:"jhlee@cubig.ai", org:"개발팀"}
+  ];
+
+  // 샘플 사용량 데이터 (31일치 * 6명)
+  let usageData = [];
+  const today = new Date();
+  for(let d=0; d<31; d++) {
+    const dt = new Date(today);
+    dt.setDate(today.getDate()-d);
+    const dayStr = dt.toISOString().slice(0,10);
+    users.forEach(u=>{
+      usageData.push({
+        date: dayStr,
+        org: u.org,
+        name: u.name,
+        email: u.email,
+        inToken: Math.floor(Math.random()*900+100),
+        outToken: Math.floor(Math.random()*700+50)
+      });
+    });
+  }
+  // 요금 예시(토큰 1000당 5원)
+  function calcFee(inToken, outToken) {
+    return Math.round((inToken+outToken)/1000*5);
+  }
+
+  // 위젯
+  function renderWidgetBar(filtered) {
+    const totalIn = filtered.reduce((s, d)=>s+d.inToken,0);
+    const totalOut = filtered.reduce((s, d)=>s+d.outToken,0);
+    const total = totalIn + totalOut;
+    const userSet = new Set(filtered.map(d=>d.name));
+    const orgSet = new Set(filtered.map(d=>d.org));
+    const totalFee = filtered.reduce((s,d)=>s+calcFee(d.inToken,d.outToken),0);
+    document.getElementById('widgetBar').innerHTML = `
+      <div class="widget"><div class="w-title">전체 토큰</div><div class="w-count">${total.toLocaleString()}</div></div>
+      <div class="widget"><div class="w-title">입력 토큰</div><div class="w-count">${totalIn.toLocaleString()}</div></div>
+      <div class="widget"><div class="w-title">출력 토큰</div><div class="w-count">${totalOut.toLocaleString()}</div></div>
+      <div class="widget"><div class="w-title">조직/부서 수</div><div class="w-count">${orgSet.size}</div></div>
+      <div class="widget"><div class="w-title">사용자 수</div><div class="w-count">${userSet.size}</div></div>
+      <div class="widget"><div class="w-title">예상 요금</div><div class="w-count">${totalFee.toLocaleString()} 원</div></div>
+    `;
+  }
+
+  let chartType = 'bar';
+
+  // 피벗 분석 서브 선택 (멀티)
+  let pivotSubSelected = [];
+  let pivotSubKeyword = "";
+  function onPivotTypeChange() {
+    pivotSubSelected = [];
+    pivotSubKeyword = "";
+    renderAll();
+  }
+  function renderPivotSubSel() {
+    const pivot = document.getElementById('pivotType').value;
+    const container = document.getElementById('pivotSubSel');
+    let html = '';
+    // 전체 기본값
+    let label = '전체';
+    let tagArr = [];
+    if (pivotSubSelected.length>0) {
+      if(pivot==="org") tagArr = pivotSubSelected.map(x=>x);
+      else tagArr = pivotSubSelected.map(e=>users.find(u=>u.email===e)?.name||e);
+      label = tagArr.join(', ');
+    }
+    html += `<span class="multi-select" onclick="showMultiOptions('${pivot}')">${label}</span>
+    <div class="multi-options" id="multiOpts" style="display:none;">
+      <label><input type="checkbox" onchange="selectAllMulti('${pivot}',this.checked)" ${pivotSubSelected.length===0?'checked':''}>전체</label>
+      <input type="text" class="multi-search" placeholder="검색" oninput="pivotSubKeyword=this.value.toLowerCase(); renderMultiList();">
+      <div class="multi-list" id="multiList"></div>
+    </div>`;
+    html += `<div class="multi-selected-tags" id="pivotSubTags">${pivotSubSelected.length?tagArr.map((name,i)=>`
+      <span class="multi-tag">${name} <span class="remove-x" onclick="removePivotTag(${i})">&times;</span></span>`).join(''):""}</div>`;
+    container.innerHTML = html;
+    renderMultiList();
+  }
+  function showMultiOptions(type) {
+    document.getElementById('multiOpts').style.display = 'block';
+    document.body.addEventListener('mousedown',hideMultiOutside,true);
+  }
+  function hideMultiOptions() {
+    document.getElementById('multiOpts').style.display='none';
+    document.body.removeEventListener('mousedown',hideMultiOutside,true);
+  }
+  function hideMultiOutside(e) {
+    if(!e.target.closest('.multi-options') && !e.target.closest('.multi-select')) {
+      hideMultiOptions();
+    }
+  }
+  function renderMultiList() {
+    const pivot = document.getElementById('pivotType').value;
+    const listDiv = document.getElementById('multiList');
+    let opts = [];
+    if(pivot==="org") {
+      opts = orgs.filter(org=>!pivotSubKeyword||org.toLowerCase().includes(pivotSubKeyword));
+      listDiv.innerHTML = opts.map(org=>
+        `<label><input type="checkbox" onchange="toggleMultiSel('org','${org}')" ${pivotSubSelected.includes(org)?'checked':''}>${org}</label>`
+      ).join('');
+    } else {
+      opts = users.filter(u=>!pivotSubKeyword||u.name.toLowerCase().includes(pivotSubKeyword)||u.email.toLowerCase().includes(pivotSubKeyword));
+      listDiv.innerHTML = opts.map(u=>
+        `<label><input type="checkbox" onchange="toggleMultiSel('user','${u.email}')" ${pivotSubSelected.includes(u.email)?'checked':''}>${u.name} <span style='color:#aaa;'>(${u.email})</span></label>`
+      ).join('');
+    }
+  }
+  function selectAllMulti(type,checked) {
+    pivotSubSelected = [];
+    renderPivotSubSel(); renderAll();
+  }
+  function toggleMultiSel(type, value) {
+    if(pivotSubSelected.includes(value)) {
+      pivotSubSelected = pivotSubSelected.filter(v=>v!==value);
+    } else {
+      pivotSubSelected.push(value);
+    }
+    // 전체 선택 해제/적용
+    renderPivotSubSel();
+    renderAll();
+  }
+  function removePivotTag(idx) {
+    pivotSubSelected.splice(idx,1);
+    renderPivotSubSel();
+    renderAll();
+  }
+
+  // 차트
+  let usageChart;
+  function renderChart(filtered) {
+    const pivot = document.getElementById('pivotType').value;
+    const showIn = document.getElementById('chkIn').checked;
+    const showOut = document.getElementById('chkOut').checked;
+    const showTotal = document.getElementById('chkTotal').checked;
+
+    let groupList = [];
+    if (pivot==='org') {
+      groupList = orgs.filter(org=>pivotSubSelected.length===0||pivotSubSelected.includes(org));
+    } else {
+      groupList = users.filter(u=>pivotSubSelected.length===0||pivotSubSelected.includes(u.email)).map(u=>u.name+" ("+u.email+")");
+    }
+
+    const pivotData = {};
+    groupList.forEach(g=>{
+      pivotData[g]={in:0,out:0,total:0};
+    });
+    filtered.forEach(d=>{
+      if (pivot==='org') {
+        if(groupList.includes(d.org)) {
+          pivotData[d.org].in += d.inToken;
+          pivotData[d.org].out += d.outToken;
+          pivotData[d.org].total += (d.inToken+d.outToken);
+        }
+      } else {
+        let uname = d.name+" ("+d.email+")";
+        if(groupList.includes(uname)) {
+          pivotData[uname].in += d.inToken;
+          pivotData[uname].out += d.outToken;
+          pivotData[uname].total += (d.inToken+d.outToken);
+        }
+      }
+    });
+    let labels = Object.keys(pivotData);
+    const datasets = [];
+    if (showIn) datasets.push({label:"입력 토큰", data:labels.map(k=>pivotData[k].in), backgroundColor:"#2d6edb"});
+    if (showOut) datasets.push({label:"출력 토큰", data:labels.map(k=>pivotData[k].out), backgroundColor:"#23b3ae"});
+    if (showTotal) datasets.push({label:"전체 토큰", data:labels.map(k=>pivotData[k].total), backgroundColor:"#b3b6d7"});
+    const ctx = document.getElementById('usageChart').getContext('2d');
+    if (usageChart) usageChart.destroy();
+    usageChart = new Chart(ctx, {
+      type: chartType,
+      data: {
+        labels,
+        datasets
+      },
+      options: {
+        responsive:true,
+        plugins:{legend:{display:true}},
+        scales:{x:{ticks:{font:{size:14}}}, y:{beginAtZero:true, ticks:{font:{size:14}}}}
+      }
+    });
+  }
+
+  function onChartTypeChange() {
+    chartType = document.getElementById('chartTypeSel').value;
+    renderAll();
+  }
+
+  // 테이블
+  function renderTable(filtered) {
+    document.getElementById('usageTbody').innerHTML = filtered.map(d=>`
+      <tr>
+        <td>${d.date}</td>
+        <td>${d.org}</td>
+        <td>${d.name}</td>
+        <td class="num">${d.inToken.toLocaleString()}</td>
+        <td class="num">${d.outToken.toLocaleString()}</td>
+        <td class="num">${(d.inToken+d.outToken).toLocaleString()}</td>
+        <td class="num">${calcFee(d.inToken, d.outToken).toLocaleString()} 원</td>
+      </tr>
+    `).join('');
+  }
+
+  // 필터
+  function getFilteredData() {
+    const from = document.getElementById('dateFrom').value;
+    const to = document.getElementById('dateTo').value;
+    const pivot = document.getElementById('pivotType').value;
+    let subList = pivotSubSelected;
+    return usageData.filter(d=>{
+      if (from && d.date<from) return false;
+      if (to && d.date>to) return false;
+      if (pivot==='org') {
+        if(subList.length && !subList.includes(d.org)) return false;
+      } else {
+        if(subList.length && !subList.includes(d.email)) return false;
+      }
+      return true;
+    });
+  }
+
+  // 엑셀 다운로드
+  function downloadTable() {
+    let csv = "일자,조직/부서,이름,입력토큰,출력토큰,전체토큰,예상요금(원)\n";
+    getFilteredData().forEach(d=>{
+      csv += `${d.date},${d.org},${d.name},${d.inToken},${d.outToken},${d.inToken+d.outToken},${calcFee(d.inToken, d.outToken)}\n`;
+    });
+    const blob = new Blob([csv],{type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = "사용현황.csv";
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+  }
+
+  function renderAll() {
+    renderPivotSubSel();
+    const filtered = getFilteredData();
+    renderWidgetBar(filtered);
+    renderChart(filtered);
+    renderTable(filtered);
+  }
+
+  // 날짜 프리셋
+  function onPresetChange() {
+    const preset = document.getElementById('datePreset').value;
+    const from = document.getElementById('dateFrom');
+    const to = document.getElementById('dateTo');
+    const today = new Date();
+    let start, end;
+    if (preset === "today") {
+      start = end = today;
+    } else if (preset === "week") {
+      const day = today.getDay();
+      start = new Date(today);
+      start.setDate(today.getDate() - day + 1);
+      end = today;
+    } else if (preset === "month") {
+      start = new Date(today.getFullYear(), today.getMonth(), 1);
+      end = today;
+    } else {
+      // custom
+      document.getElementById('customDateRange').style.display = 'inline-flex';
+      renderAll();
+      return;
+    }
+    // 날짜 세팅
+    from.value = start.toISOString().slice(0,10);
+    to.value = end.toISOString().slice(0,10);
+    document.getElementById('customDateRange').style.display = 'inline-flex';
+    renderAll();
+  }
+
+  // 날짜/필터 초기화
+  window.onload = function(){
+    const from = document.getElementById('dateFrom');
+    const to = document.getElementById('dateTo');
+    const today = new Date();
+    from.value = to.value = today.toISOString().slice(0,10);
+    document.getElementById('pivotType').value = "org";
+    document.getElementById('customDateRange').style.display = 'inline-flex';
+    document.getElementById('datePreset').value = "today";
+    pivotSubSelected = [];
+    pivotSubKeyword = "";
+    renderAll();
+  }
+</script>
+</body>
+</html>
