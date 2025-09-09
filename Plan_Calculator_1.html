@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <title>LLM Capsule - Enterprise 간이 견적 (Token Slider Plan)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    /* ===== 공통 토큰 ===== */
+    :root{
+      --bg:#f8fafc;--card:#fff;--text:#0f172a;--muted:#64748b;--muted-2:#475569;
+      --border:#e5e7eb;--ring:#dbeafe;--accent:#2563eb;--accent-500:#3b82f6;
+      --ok-50:#ecfdf5;--ok-300:#6ee7b7;--ok-700:#047857;
+      --warn-50:#fffbeb;--warn-300:#fcd34d;--warn-700:#b45309;
+      --radius-xl:16px;--shadow-sm:0 1px 2px rgba(15,23,42,.06);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Noto Sans KR,Apple SD Gothic Neo,Arial;color:var(--text);background:var(--bg)}
+    .root{min-height:100svh}
+    /* 헤더 */
+    .header{position:sticky;top:0;z-index:30;border-bottom:1px solid var(--border);background:rgba(255,255,255,.85);backdrop-filter:saturate(180%) blur(8px)}
+    .headerInner{max-width:1120px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .title{font-size:1.125rem;font-weight:600;color:#1f2937}
+    .headerActions{display:flex;gap:12px;align-items:center;color:var(--muted-2);font-size:.9375rem}
+    .btn{border:1px solid var(--border);background:#fff;border-radius:8px;padding:8px 12px;font-weight:600;cursor:pointer;text-decoration:none;color:inherit}
+    .btn:hover{background:#f8fafc}
+    .btnPrimary{background:#111827;color:#fff;border:1px solid #111827;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btnPrimary:hover{background:#0b1220}
+    .btnOutlineBlue{border:1px solid var(--accent);color:var(--accent);background:#fff;border-radius:8px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btnOutlineBlue:hover{background:#eff6ff}
+    /* 메인 그리드 */
+    .main{max-width:1120px;margin:0 auto;padding:24px 20px;display:grid;gap:24px;grid-template-columns:1fr}
+    @media(min-width:1024px){.main{grid-template-columns:1fr 380px}}
+    .leftCol{display:flex;flex-direction:column;gap:24px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow-sm)}
+    .cardHeader{margin-bottom:12px}
+    .cardTitle{font-size:1rem;font-weight:600}
+    .cardSubtitle{font-size:.75rem;color:var(--muted)}
+    .row{display:flex;align-items:center;gap:12px}
+    .small{font-size:.875rem;color:var(--muted-2)}
+    .tiny{font-size:.75rem;color:var(--muted)}
+    .numberInput{width:160px;border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+    .stepBtn{border:1px solid var(--border);border-radius:8px;padding:8px 12px;background:#fff;cursor:pointer}
+    .warn{margin-top:8px;border:1px solid var(--warn-300);background:var(--warn-50);color:var(--warn-700);border-radius:8px;padding:8px 12px;font-size:.875rem}
+    .termGroup{display:flex;flex-wrap:wrap;gap:10px}
+    .termOption{display:inline-flex;align-items:center;gap:8px;font-size:.875rem}
+    .toggleRow{margin-top:12px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:10px;background:#f8fafc;padding:12px}
+    .sectionBox{margin-top:16px;border:1px solid var(--border);border-radius:10px;padding:16px}
+    .sectionTitle{font-size:.875rem;font-weight:700;margin-bottom:8px}
+    .addonGrid{display:grid;grid-template-columns:1fr;gap:8px}
+    @media(min-width:640px){.addonGrid{grid-template-columns:1fr 1fr}}
+    .toggleItem{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:10px;background:#fff;padding:10px 12px}
+    .price{display:inline-flex;align-items:center;gap:10px;font-size:.8125rem;color:var(--muted)}
+    .dimmed{opacity:.4;pointer-events:none}
+    /* 아코디언 */
+    .acc{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#fff}
+    .accHeader{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;cursor:pointer;background:#fff;border:none;text-align:left}
+    .accTitleWrap{display:flex;align-items:center;gap:8px}
+    .caret{width:18px;height:18px;flex-shrink:0;transition:transform 180ms ease;transform:rotate(-90deg)}
+    .caretOpen{transform:rotate(0deg)}
+    .accBody{overflow:hidden;height:0;border-top:1px solid var(--border);background:#fff}
+    .accBodyInner{padding:12px 14px}
+    /* 우측 요약 */
+    .aside{position:static}
+    @media(min-width:1024px){.aside{position:sticky;top:16px;align-self:start}}
+    .summaryCard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-xl);padding:20px;box-shadow:var(--shadow-sm)}
+    @media(min-width:1024px){.summaryCard{max-height:calc(100vh - 32px);overflow:auto;overscroll-behavior:contain}}
+    .summaryTitle{font-size:1rem;font-weight:600;margin-bottom:8px}
+    .summaryList{font-size:.9375rem;color:#334155}
+    .summaryList li{margin:4px 0}
+    .divider{margin:16px 0;border:none;border-top:1px solid var(--border)}
+    /* KV */
+    .kvRow,.kvRowMuted,.kvRowLg{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:6px 0}
+    .kvLabel{font-size:.875rem;color:var(--muted-2)}
+    .kvValue{font-weight:700;font-size:1rem}
+    .kvValueEmph{font-weight:800;font-size:1rem}
+    .kvRowMuted .kvLabelMuted{font-size:.75rem;color:var(--muted)}
+    .kvRowMuted .kvValueMuted{font-size:.875rem;color:var(--muted-2)}
+    .kvRowLg .kvLabelLg{font-size:.9375rem;font-weight:700}
+    .kvRowLg .kvValueLg{font-size:1.125rem;font-weight:800}
+    .ctaCol{margin-top:12px;display:flex;flex-direction:column;gap:8px}
+    .vatRow{margin-top:12px;display:flex;align-items:center;justify-content:space-between;border:1px solid var(--border);border-radius:10px;background:#f8fafc;padding:10px 12px}
+    .statusOk{border:1px solid var(--ok-300);background:var(--ok-50);color:var(--ok-700);border-radius:10px;padding:12px 14px;font-size:.875rem}
+    /* 인쇄 */
+    @media print{
+      .header,#section-plan,#section-seats,#section-term,#section-addon,#section-addon-recurring{display:none!important}
+      .aside,.summaryCard{display:block!important}
+      body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+    }
+    /* ===== 플랜 선택: 토큰 슬라이더 ===== */
+    .tokenPanel{display:grid;gap:10px}
+    .tokenTop{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .badgePlan{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--border);border-radius:999px;padding:8px 12px;background:#fff}
+    .badgePlanName{font-weight:800}
+    .badgePlanPrice{font-weight:700;color:#111827}
+    .tokenNum{font-variant-numeric:tabular-nums}
+    .rangeRow{display:flex;flex-direction:column;gap:8px}
+    .rangeWrap{position:relative}
+    input[type="range"]{width:100%;height:8px;border-radius:999px;background:linear-gradient(90deg,#dbebff 0%,#e2e8f0 100%);outline:none;-webkit-appearance:none;appearance:none}
+    input[type="range"]::-webkit-slider-thumb{ -webkit-appearance:none;appearance:none;width:18px;height:18px;border-radius:50%;background:#2563eb;border:2px solid #fff;box-shadow:0 0 0 3px #bfdbfe;cursor:pointer}
+    input[type="range"]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#2563eb;border:2px solid #fff;box-shadow:0 0 0 3px #bfdbfe;cursor:pointer}
+    .tickRow{display:flex;justify-content:space-between;font-size:.75rem;color:var(--muted)}
+    .tickRow b{color:#334155}
+    .usageGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .usageCard{border:1px solid var(--border);border-radius:10px;background:#fff;padding:12px}
+    .usageTitle{font-size:.875rem;font-weight:700;margin-bottom:6px}
+    .usageList{font-size:.8125rem;color:#334155;line-height:1.45}
+    .footNote{font-size:.75rem;color:var(--muted)}
+    .infoList{padding-left:18px;color:var(--muted-2);font-size:.875rem}
+    .infoList li{list-style:disc;margin:4px 0}
+    /* 슬라이더 눈금 + 라벨 한 줄에 수직 스택 */
+.ticks{
+  position: relative;
+  height: 34px;         /* 숫자 + 라벨 2줄 높이 */
+  margin-top: 6px;
+}
+.tick{
+  position: absolute;
+  left: var(--pos);
+  transform: translateX(-50%);
+  text-align: center;
+}
+.tick--end{
+  /* 오른쪽 끝 눈금은 가운데 정렬 시 일부가 잘릴 수 있어 우측 정렬 */
+  transform: translateX(-100%);
+}
+.tick-num{
+  display: block;
+  line-height: 1;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+.tick-label{
+  display: block;
+  line-height: 1;
+  margin-top: 2px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #334155; /* slate-700 */
+}
+
+  </style>
+</head>
+<body>
+  <div class="root">
+    <header class="header">
+      <div class="headerInner">
+        <h1 class="title">LLM Capsule <span style="color:#94a3b8">|</span> <strong>견적 계산기</strong></h1>
+        <div class="headerActions">
+          <span>홍길동 · Cubig Inc.</span>
+          <a href="#" class="btn" title="저장된 견적 보기">저장된 견적</a>
+          <button class="btnPrimary" type="button">로그아웃</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- ================== 왼쪽: 섹션들 ================== -->
+      <section class="leftCol" aria-label="입력 영역">
+
+        <!-- (2) 플랜 선택: 토큰 슬라이더 기반 -->
+        <section id="section-plan" class="section" aria-labelledby="sec-plan-title">
+          <div class="card">
+            <div class="cardHeader">
+              <h2 id="sec-plan-title" class="cardTitle">플랜 선택 (토큰 사용량 기반)</h2>
+              <p class="cardSubtitle">슬라이더로 월 예상 토큰 사용량을 지정하면, 해당 구간의 요금제가 자동 선택됩니다.</p>
+            </div>
+
+            <div class="tokenPanel">
+              <!-- 선택된 플랜 뱃지 -->
+              <div class="tokenTop">
+                <div class="badgePlan" aria-live="polite">
+                  <span>현재 요금제:</span>
+                  <span id="badge-plan-name" class="badgePlanName">Pro</span>
+                  <span>·</span>
+                  <span id="badge-plan-price" class="badgePlanPrice">₩25,500/Seat</span>
+                </div>
+                <div class="small">예상 토큰: <b id="badge-token" class="tokenNum">150,000</b></div>
+              </div>
+
+              <!-- 토큰 슬라이더 -->
+              <div class="rangeRow">
+                <div class="rangeWrap">
+                  <!-- ✔ step=1 로 전구간(1~600,000) 정확 커버 -->
+                  <input id="in-token" type="range" min="1" max="600000" step="1" value="150000" aria-label="예상 토큰(월)">
+                <!-- 교체: 숫자 바로 아래에 플랜 라벨이 붙는 단일 레이어 -->
+                <div class="ticks" aria-hidden="true">
+                  <div class="tick" style="--pos:11.6667%;">
+                    <span class="tick-num">70,000</span>
+                    <span class="tick-label">Basic</span>
+                  </div>
+                  <div class="tick" style="--pos:20%;">
+                    <span class="tick-num">120,000</span>
+                    <span class="tick-label">Plus</span>
+                  </div>
+                  <div class="tick" style="--pos:46.6667%;">
+                    <span class="tick-num">280,000</span>
+                    <span class="tick-label">Pro</span>
+                  </div>
+                  <div class="tick tick--end" style="--pos:100%;">
+                    <span class="tick-num">600,000</span>
+                    <span class="tick-label">Max</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 사용량 환산(6:4) + 언어별 문자 / WP 장 수 -->
+              <div class="usageGrid">
+                <div class="usageCard">
+                  <div class="usageTitle">토큰 분배 (입/출력 6:4)</div>
+                  <ul class="usageList">
+                    <li>입력(60%): <b id="u-in-token">90,000</b> tokens</li>
+                    <li>출력(40%): <b id="u-out-token">60,000</b> tokens</li>
+                    <li>총합: <b id="u-total-token">150,000</b> tokens</li>
+                  </ul>
+                </div>
+                <div class="usageCard">
+                  <div class="usageTitle">문자·페이지 환산(가정값)</div>
+                  <ul class="usageList">
+                    <li>한글: <span id="u-ko-chars">300,000</span>자 (입 <span id="u-ko-in">180,000</span> / 출 <span id="u-ko-out">120,000</span>)</li>
+                    <li>영어: <span id="u-en-chars">600,000</span>자 (입 <span id="u-en-in">360,000</span> / 출 <span id="u-en-out">240,000</span>)</li>
+                    <li>워드프레스: 약 <b id="u-wp-pages">250</b>장 (기준 1,200자/장)</li>
+                  </ul>
+                  <div class="footNote">* 가정: 한글 1토큰≈2자, 영어 1토큰≈4자, WP 1장≈1,200자(관리자 변경 가능)</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+                <!-- (1) 사용자 수 -->
+        <section id="section-seats" class="section" aria-labelledby="sec-seats-title">
+          <div class="card">
+            <div class="cardHeader">
+              <h2 id="sec-seats-title" class="cardTitle">사용자 수 (Seats)</h2>
+              <p class="cardSubtitle">최소 100부터, 50단위 증감</p>
+            </div>
+            <div class="row">
+              <input id="in-seats" class="numberInput" type="number" value="200" min="100" step="50" />
+              <div class="row">
+                <button id="btn-seats-dec" class="stepBtn" type="button">−50</button>
+                <button id="btn-seats-inc" class="stepBtn" type="button">+50</button>
+              </div>
+            </div>
+            <p id="seats-warn" class="warn" style="display:none;">
+              최소 <b>100 Seat</b>부터 견적 산출됩니다. 입력값을 자동 보정합니다.
+            </p>
+          </div>
+        </section>
+
+        <!-- (3) 계약 기간 -->
+        <section id="section-term" class="section" aria-labelledby="sec-term-title">
+          <div class="card">
+            <div class="cardHeader">
+              <h2 id="sec-term-title" class="cardTitle">계약 기간</h2>
+              <p class="cardSubtitle">기간 할인은 관리자 가변 정책</p>
+            </div>
+            <div class="termGroup" id="term-radios">
+              <label class="termOption"><input type="radio" name="term" value="1"> <span class="small">1개월 <span class="tiny">(−0%)</span></span></label>
+              <label class="termOption"><input type="radio" name="term" value="6"> <span class="small">6개월 <span class="tiny">(−3%)</span></span></label>
+              <label class="termOption"><input type="radio" name="term" value="12" checked> <span class="small">12개월 <span class="tiny">(−5%)</span></span></label>
+              <label class="termOption"><input type="radio" name="term" value="18"> <span class="small">18개월 <span class="tiny">(−7%)</span></span></label>
+              <label class="termOption"><input type="radio" name="term" value="24"> <span class="small">24개월 <span class="tiny">(−10%)</span></span></label>
+            </div>
+            <div class="toggleRow">
+              <label class="row">
+                <input id="chk-upfront" type="checkbox" />
+                <span class="small"><b>선결제(일시불)</b> · 선택 시 추가 할인</span>
+              </label>
+              <div class="row" id="upfront-input-row" style="display:none;">
+                <span class="tiny">추가 할인율</span>
+                <input id="in-upfront-disc" class="inputSm" type="number" step="0.01" min="0" max="0.5" value="0.02" />
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- (4) Add-on (아코디언) -->
+        <section id="section-addon" class="section" aria-labelledby="sec-addon-title">
+          <div class="card">
+            <div class="acc" id="addon-acc">
+              <button type="button" class="accHeader" id="addon-acc-header" aria-expanded="true" aria-controls="addon-acc-body">
+                <div class="accTitleWrap">
+                  <svg class="caret caretOpen" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path d="M8 9l4 4 4-4" stroke="#334155" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                  </svg>
+                  <span class="cardTitle">Add-on (1회성 구축비)</span>
+                </div>
+                <span class="cardSubtitle">※ 기간/선결제 할인 미적용</span>
+              </button>
+              <div id="addon-acc-body" class="accBody" aria-hidden="false" style="height:auto;">
+                <div class="accBodyInner">
+                  <!-- 고정형 민감 키워드 -->
+                  <div class="sectionBox">
+                    <div class="sectionTitle">정형 민감 키워드 구축</div>
+                    <div class="termGroup" id="kw-radios">
+                      <label class="termOption"><input type="radio" name="kw" value="0" checked> <span class="small">선택 안 함</span></label>
+                      <label class="termOption"><input type="radio" name="kw" value="5"> <span class="small">5개 · ₩12,000,000</span></label>
+                      <label class="termOption"><input type="radio" name="kw" value="8"> <span class="small">8개 · ₩15,000,000</span></label>
+                      <label class="termOption"><input type="radio" name="kw" value="12"> <span class="small">12개 · ₩18,000,000</span></label>
+                    </div>
+                  </div>
+                  <!-- 중앙 관리자 콘솔 -->
+                  <div class="sectionBox">
+                    <div class="sectionTitle">중앙 관리자 콘솔 Admin 구축</div>
+                    <p class="tiny">좌석 수 기준 권장가: <b id="admin-auto-price">₩15,000,000</b></p>
+                    <div class="termGroup" id="admin-radios" style="margin-top:6px;">
+                      <label class="termOption"><input type="radio" name="admin" value="0_200"> <span class="small">0–200 · ₩25,000,000</span></label>
+                      <label class="termOption"><input type="radio" name="admin" value="200_500" checked> <span class="small">200–500 · ₩15,000,000</span></label>
+                      <label class="termOption"><input type="radio" name="admin" value="500_PLUS"> <span class="small">500+ · ₩0</span></label>
+                    </div>
+                    <p class="tiny" style="margin-top:6px;">(참고) 선택가 <span id="admin-chosen-price">₩15,000,000</span></p>
+                  </div>
+                  <!-- 비정형 민감정보 -->
+                  <div class="sectionBox">
+                    <div class="sectionTitle">비정형 민감정보 조건 모듈</div>
+                    <label class="toggleItem" style="margin-bottom:8px;">
+                      <span class="small">기본 모듈</span>
+                      <span class="price"><span>₩25,000,000</span> <input id="chk-unstr-base" type="checkbox"></span>
+                    </label>
+                    <div class="termGroup dimmed" id="unstr-filter-group">
+                      <label class="termOption"><input type="radio" name="unstrFilter" value="0" checked disabled> <span class="small">필터 선택 안 함</span></label>
+                      <label class="termOption"><input type="radio" name="unstrFilter" value="5" disabled> <span class="small">필터 5개 · ₩5,000,000</span></label>
+                      <label class="termOption"><input type="radio" name="unstrFilter" value="8" disabled> <span class="small">필터 8개 · ₩10,000,000</span></label>
+                      <label class="termOption"><input type="radio" name="unstrFilter" value="12" disabled> <span class="small">필터 12개 · ₩15,000,000</span></label>
+                    </div>
+                  </div>
+                  <!-- 기타 모듈 -->
+                  <div class="sectionBox">
+                    <div class="sectionTitle">기타 모듈</div>
+                    <div class="addonGrid">
+                      <label class="toggleItem"><span class="small">RAG 시스템</span><span class="price"><span>₩10,000,000</span><input id="chk-rag" type="checkbox"></span></label>
+                      <label class="toggleItem"><span class="small">최신 기술 Graph RAG 적용</span><span class="price"><span>₩38,000,000</span><input id="chk-graphrag" type="checkbox"></span></label>
+                      <label class="toggleItem"><span class="small">문서보안등급별 접근 제어</span><span class="price"><span>₩5,000,000</span><input id="chk-docacl" type="checkbox"></span></label>
+                      <label class="toggleItem"><span class="small">문맥 기반 AI 탐색 적용</span><span class="price"><span>₩5,000,000</span><input id="chk-ctxsearch" type="checkbox"></span></label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div><!-- acc -->
+          </div>
+        </section>
+
+        <!-- (5) 반복 비용(Add-on) -->
+        <section id="section-addon-recurring" class="section" aria-labelledby="sec-addon-rec-title">
+          <div class="card">
+            <div class="cardHeader">
+              <h2 id="sec-addon-rec-title" class="cardTitle">반복 비용 (Add-on)</h2>
+              <p class="cardSubtitle">추가 토큰 팩</p>
+            </div>
+            <div class="row" style="justify-content:space-between;">
+              <div>
+                <p class="small">10만 토큰/월 당 <b>₩13,000</b></p>
+                <p class="tiny">Seat 플랜 Cap 초과 시 시리얼별 추가 토큰 · 기간/선결제 할인 대상</p>
+              </div>
+              <div class="row">
+                <button id="btn-pack-dec" class="stepBtn" type="button">−</button>
+                <input id="in-token-packs" class="numberInput" type="number" min="0" max="100" value="0" style="width:80px;text-align:center;">
+                <button id="btn-pack-inc" class="stepBtn" type="button">+</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 안내 -->
+        <section class="section">
+          <div class="card">
+            <div class="cardHeader"><h2 class="cardTitle">Token/모델 비용 고지 (Info)</h2></div>
+            <ul class="infoList">
+              <li><b>Seat(Base)</b>: 플랜별 토큰 Cap 포함. Cap 내 사용은 추가 과금 없음.</li>
+              <li><b>Cap 초과 정책</b>: 차단 또는 추가 구매는 별도 정책으로 안내.</li>
+              <li><b>License(서버)</b>: 토큰 미포함. 모델 공급사(OpenAI/Anthropic/Google 등)에 고객 직접 결제.</li>
+            </ul>
+          </div>
+        </section>
+
+        <div id="save-msg" class="statusOk" style="display:none;margin-top:12px;"></div>
+      </section>
+
+      <!-- ================== 오른쪽: 요약(변경 없음) ================== -->
+      <aside class="aside" aria-label="견적 요약">
+        <div class="summaryCard">
+          <h2 class="summaryTitle">요약</h2>
+          <ul class="summaryList">
+            <li>플랜: <b id="sum-plan-name">Pro</b> (<span id="sum-plan-price">₩25,500</span>/Seat · Cap <span id="sum-plan-cap">280,000</span>)</li>
+            <li>좌석: <b id="sum-seats">200</b></li>
+            <li>기간: <b id="sum-term">12개월</b> (기간 할인 <span id="sum-term-disc">5</span>%)</li>
+            <li>선결제: <b id="sum-upfront">아니오</b></li>
+            <li>추가 토큰 팩: <b id="sum-packs">0</b> × ₩13,000/월</li>
+            <li>VAT 표시: <b id="sum-vat">OFF</b></li>
+          </ul>
+          <hr class="divider">
+          <div class="kvRow"><div class="kvLabel">월 반복 비용</div><div id="sum-recurring" class="kvValue">₩0</div></div>
+          <div class="kvRow"><div class="kvLabel">1회성 구축비</div><div id="sum-onetime" class="kvValue">₩0</div></div>
+          <div class="kvRow"><div class="kvLabel">첫 청구 예상 (월과금)</div><div id="sum-firstinvoice" class="kvValueEmph">₩0</div></div>
+          <div id="row-firstinvoice-vat" class="kvRowMuted" style="display:none;"><div class="kvLabelMuted">VAT 포함</div><div id="sum-firstinvoice-vat" class="kvValueMuted">₩0</div></div>
+          <div class="kvRowLg"><div class="kvLabelLg">총 계약 금액</div><div id="sum-contract" class="kvValueLg">₩0</div></div>
+          <div id="row-upfront-applied" class="kvRowMuted" style="display:none;"><div class="kvLabelMuted">선결제 적용 <span class="tiny">(추가 <span id="sum-upfront-disc">2</span>%)</span></div><div id="sum-contract-upfront" class="kvValueMuted">₩0</div></div>
+          <div id="row-contract-vat" class="kvRowMuted" style="display:none;"><div class="kvLabelMuted">VAT 포함</div><div id="sum-contract-vat" class="kvValueMuted">₩0</div></div>
+          <div class="ctaCol">
+            <button id="btn-print" class="btnPrimary" type="button">PDF 내보내기</button>
+            <button id="btn-save" class="btnOutlineBlue" type="button">견적 생성 (스냅샷 저장)</button>
+            <div class="vatRow">
+              <label class="row"><input id="chk-vat" type="checkbox"> <span>세금/VAT 표시</span></label>
+              <span class="tiny">VAT 10%</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+
+  <script>
+    /* ===== 상수/유틸 ===== */
+    // 플랜 구간 매핑(요청 사양)
+    const PLAN = {
+      BASIC:{code:"BASIC",name:"Basic",seatPrice:10500,tokenCap:70000},
+      PLUS:{code:"PLUS",name:"Plus",seatPrice:15500,tokenCap:120000},
+      PRO:{code:"PRO",name:"Pro",seatPrice:25500,tokenCap:280000},
+      MAX:{code:"MAX",name:"Max",seatPrice:51000,tokenCap:600000},
+    };
+    const TERM_DISCOUNT={1:0,6:.03,12:.05,18:.07,24:.10};
+    const DEFAULT_UPFRONT_DISC=.02, VAT_RATE=.10, MIN_SEATS=100, TOKEN_PACK_PRICE=13000;
+
+    // 문자 환산 가정
+    const KOREAN_CHARS_PER_TOKEN = 2;
+    const ENGLISH_CHARS_PER_TOKEN = 4;
+    const WP_CHARS_PER_PAGE = 1200;
+
+    const fmt=(n)=>"₩"+(n||0).toLocaleString();
+    const num=(n)=> (n||0).toLocaleString();
+
+    // 토큰 → 플랜(구간) — 경계 정확
+    function planFromTokens(t){
+      if (t <= 70000)   return PLAN.BASIC; // 1 ~ 70,000
+      if (t <= 120000)  return PLAN.PLUS;  // 70,001 ~ 120,000
+      if (t <= 280000)  return PLAN.PRO;   // 120,001 ~ 280,000
+      return PLAN.MAX;                     // 280,001 ~ 600,000
+    }
+
+    /* ===== 상태 ===== */
+    const state={
+      plan:PLAN.PRO, seats:200, term:12,
+      isUpfront:false, upfrontDisc:DEFAULT_UPFRONT_DISC,
+      vatOn:false, tokenPacks:0,
+      // add-on
+      kwBundle:0, adminBand:"200_500",
+      unstrBase:false, unstrFilter:0,
+      rag:false, graphRag:false, docACL:false, ctxSearch:false,
+      // token slider
+      tokens:150000, // 기본값: Pro 구간
+    };
+
+    /* ===== DOM ===== */
+    // Seats
+    const inSeats=document.getElementById("in-seats");
+    const btnSeatsDec=document.getElementById("btn-seats-dec");
+    const btnSeatsInc=document.getElementById("btn-seats-inc");
+    const seatsWarn=document.getElementById("seats-warn");
+    // Token slider & usage
+    const inToken=document.getElementById("in-token");
+    const badgePlanName=document.getElementById("badge-plan-name");
+    const badgePlanPrice=document.getElementById("badge-plan-price");
+    const badgeToken=document.getElementById("badge-token");
+    const uInToken=document.getElementById("u-in-token");
+    const uOutToken=document.getElementById("u-out-token");
+    const uTotalToken=document.getElementById("u-total-token");
+    const uKoChars=document.getElementById("u-ko-chars");
+    const uKoIn=document.getElementById("u-ko-in");
+    const uKoOut=document.getElementById("u-ko-out");
+    const uEnChars=document.getElementById("u-en-chars");
+    const uEnIn=document.getElementById("u-en-in");
+    const uEnOut=document.getElementById("u-en-out");
+    const uWpPages=document.getElementById("u-wp-pages");
+    // Term & upfront
+    const termRadios=document.getElementById("term-radios");
+    const chkUpfront=document.getElementById("chk-upfront");
+    const upfrontRow=document.getElementById("upfront-input-row");
+    const inUpfrontDisc=document.getElementById("in-upfront-disc");
+    // Add-on accordion
+    const addonAccHeader=document.getElementById("addon-acc-header");
+    const addonAccBody=document.getElementById("addon-acc-body");
+    const addonCaret=addonAccHeader.querySelector(".caret");
+    // Add-on options
+    const kwRadios=document.getElementById("kw-radios");
+    const adminRadios=document.getElementById("admin-radios");
+    const adminAutoPrice=document.getElementById("admin-auto-price");
+    const adminChosenPrice=document.getElementById("admin-chosen-price");
+    const chkUnstrBase=document.getElementById("chk-unstr-base");
+    const unstrFilterGroup=document.getElementById("unstr-filter-group");
+    const chkRag=document.getElementById("chk-rag");
+    const chkGraphRag=document.getElementById("chk-graphrag");
+    const chkDocACL=document.getElementById("chk-docacl");
+    const chkCtxSearch=document.getElementById("chk-ctxsearch");
+    // Recurring addon
+    const btnPackDec=document.getElementById("btn-pack-dec");
+    const btnPackInc=document.getElementById("btn-pack-inc");
+    const inTokenPacks=document.getElementById("in-token-packs");
+    // VAT / actions
+    const chkVat=document.getElementById("chk-vat");
+    const btnPrint=document.getElementById("btn-print");
+    const btnSave=document.getElementById("btn-save");
+    const saveMsg=document.getElementById("save-msg");
+    // Summary
+    const sumPlanName=document.getElementById("sum-plan-name");
+    const sumPlanPrice=document.getElementById("sum-plan-price");
+    const sumPlanCap=document.getElementById("sum-plan-cap");
+    const sumSeats=document.getElementById("sum-seats");
+    const sumTerm=document.getElementById("sum-term");
+    const sumTermDisc=document.getElementById("sum-term-disc");
+    const sumUpfront=document.getElementById("sum-upfront");
+    const sumPacks=document.getElementById("sum-packs");
+    const sumVat=document.getElementById("sum-vat");
+    const sumRecurring=document.getElementById("sum-recurring");
+    const sumOnetime=document.getElementById("sum-onetime");
+    const sumFirstInvoice=document.getElementById("sum-firstinvoice");
+    const rowFirstInvoiceVat=document.getElementById("row-firstinvoice-vat");
+    const sumFirstInvoiceVat=document.getElementById("sum-firstinvoice-vat");
+    const sumContract=document.getElementById("sum-contract");
+    const rowUpfrontApplied=document.getElementById("row-upfront-applied");
+    const sumUpfrontDisc=document.getElementById("sum-upfront-disc");
+    const sumContractUpfront=document.getElementById("sum-contract-upfront");
+    const rowContractVat=document.getElementById("row-contract-vat");
+    const sumContractVat=document.getElementById("sum-contract-vat");
+
+    /* ===== 환산 표시 ===== */
+    function updateUsagePanels(){
+      const t = state.tokens;
+      const inTok = Math.round(t*0.6);
+      const outTok = t - inTok;
+      // 문자 환산
+      const koIn = inTok * KOREAN_CHARS_PER_TOKEN;
+      const koOut = outTok * KOREAN_CHARS_PER_TOKEN;
+      const koTotal = koIn + koOut;
+
+      const enIn = inTok * ENGLISH_CHARS_PER_TOKEN;
+      const enOut = outTok * ENGLISH_CHARS_PER_TOKEN;
+      const enTotal = enIn + enOut;
+
+      const wpPages = Math.max(1, Math.round(koTotal / WP_CHARS_PER_PAGE));
+
+      badgeToken.textContent = num(t);
+      uInToken.textContent = num(inTok);
+      uOutToken.textContent = num(outTok);
+      uTotalToken.textContent = num(t);
+
+      uKoIn.textContent = num(koIn);
+      uKoOut.textContent = num(koOut);
+      uKoChars.textContent = num(koTotal);
+
+      uEnIn.textContent = num(enIn);
+      uEnOut.textContent = num(enOut);
+      uEnChars.textContent = num(enTotal);
+
+      uWpPages.textContent = num(wpPages);
+    }
+
+    /* ===== 요약/금액 재계산 ===== */
+    function recalc(){
+      const safeSeats=Math.max(state.seats,MIN_SEATS);
+      // Summary 상단
+      sumPlanName.textContent=state.plan.name;
+      sumPlanPrice.textContent=fmt(state.plan.seatPrice);
+      sumPlanCap.textContent=state.plan.tokenCap.toLocaleString();
+      sumSeats.textContent=safeSeats.toLocaleString();
+      sumTerm.textContent=state.term+"개월";
+      sumTermDisc.textContent=Math.round(TERM_DISCOUNT[state.term]*100);
+      sumUpfront.textContent=state.isUpfront?`예(추가 ${Math.round(state.upfrontDisc*100)}%)`:"아니오";
+      sumPacks.textContent=state.tokenPacks;
+      sumVat.textContent=state.vatOn?"ON (10%)":"OFF";
+      // Admin 표시
+      adminAutoPrice.textContent=fmt(getAdminAutoPrice(safeSeats));
+      adminChosenPrice.textContent=fmt(getAdminChosenPrice());
+      // 비용계산
+      const termDisc=TERM_DISCOUNT[state.term];
+      const seatMonthly=state.plan.seatPrice*safeSeats;
+      const addonMonthly=state.tokenPacks*TOKEN_PACK_PRICE;
+      const recurringMonthlyBase=seatMonthly+addonMonthly;
+      const recurringMonthly=Math.round(recurringMonthlyBase*(1-termDisc));
+      const recurringMonthlyUpfront=state.isUpfront?Math.round(recurringMonthly*(1-state.upfrontDisc)):recurringMonthly;
+      const oneTime=getOneTime();
+      const firstInvoice=recurringMonthly+oneTime;
+      const contractMonthly=recurringMonthly*state.term+oneTime;
+      const contractUpfront=recurringMonthlyUpfront*state.term+oneTime;
+      const displayed=state.isUpfront?contractUpfront:contractMonthly;
+      // VAT
+      const firstInvoiceVat=Math.round(firstInvoice*(state.vatOn?(1+VAT_RATE):1));
+      const displayedVat=Math.round(displayed*(state.vatOn?(1+VAT_RATE):1));
+      // 출력
+      sumRecurring.textContent=fmt(recurringMonthly);
+      sumOnetime.textContent=fmt(oneTime);
+      sumFirstInvoice.textContent=fmt(firstInvoice);
+      rowFirstInvoiceVat.style.display=state.vatOn?"":"none";
+      sumFirstInvoiceVat.textContent=fmt(firstInvoiceVat);
+      sumContract.textContent=fmt(displayed);
+      rowContractVat.style.display=state.vatOn?"":"none";
+      sumContractVat.textContent=fmt(displayedVat);
+      rowUpfrontApplied.style.display=state.isUpfront?"":"none";
+      sumUpfrontDisc.textContent=Math.round(state.upfrontDisc*100);
+      sumContractUpfront.textContent=fmt(contractUpfront);
+    }
+
+    /* ===== Add-on 보조 ===== */
+    function getAdminAutoPrice(seats){
+      if(seats>500) return 0;
+      if(seats>200) return 15000000;
+      return 25000000;
+    }
+    function getAdminChosenPrice(){
+      switch(state.adminBand){
+        case "500_PLUS":return 0;
+        case "200_500":return 15000000;
+        case "0_200":return 25000000;
+      }
+    }
+    function getKeywordPrice(){
+      return state.kwBundle===5?12000000:state.kwBundle===8?15000000:state.kwBundle===12?18000000:0;
+    }
+    const getUnstrBasePrice=()=> state.unstrBase?25000000:0;
+    function getUnstrFilterPrice(){
+      if(!state.unstrBase) return 0;
+      return state.unstrFilter===5?5000000:state.unstrFilter===8?10000000:state.unstrFilter===12?15000000:0;
+    }
+    function getOtherModulePrice(){
+      return (state.rag?10000000:0)+(state.graphRag?38000000:0)+(state.docACL?5000000:0)+(state.ctxSearch?5000000:0);
+    }
+    function getOneTime(){
+      return getKeywordPrice()+getAdminChosenPrice()+getUnstrBasePrice()+getUnstrFilterPrice()+getOtherModulePrice();
+    }
+
+    /* ===== 이벤트 바인딩 ===== */
+    // Seats
+    inSeats.addEventListener("input",()=>{const v=parseInt(inSeats.value||"0",10);state.seats=isFinite(v)?v:0;seatsWarn.style.display=state.seats<MIN_SEATS?"":"none";recalc();});
+    btnSeatsDec.addEventListener("click",()=>{state.seats=Math.max(MIN_SEATS,(parseInt(inSeats.value||"0",10)||0)-50);inSeats.value=String(state.seats);seatsWarn.style.display=state.seats<MIN_SEATS?"":"none";recalc();});
+    btnSeatsInc.addEventListener("click",()=>{state.seats=(parseInt(inSeats.value||"0",10)||0)+50;inSeats.value=String(state.seats);seatsWarn.style.display=state.seats<MIN_SEATS?"":"none";recalc();});
+
+    // Token slider — ✔ 경계 정확, 1~600,000 clamp
+    function applyPlanFromToken(){
+      let t = parseInt(inToken.value || "1", 10);
+      if (!Number.isFinite(t)) t = 1;
+      t = Math.max(1, Math.min(600000, t));
+
+      state.tokens = t;
+      state.plan   = planFromTokens(t);
+
+      // 뱃지 업데이트
+      badgePlanName.textContent  = state.plan.name;
+      badgePlanPrice.textContent = `${fmt(state.plan.seatPrice)}/Seat`;
+
+      updateUsagePanels();
+      recalc();
+    }
+    inToken.addEventListener("input", applyPlanFromToken);
+
+    // Term & Upfront
+    termRadios.addEventListener("change",(e)=>{if(e.target && e.target.name==="term"){state.term=parseInt(e.target.value,10);recalc();}});
+    chkUpfront.addEventListener("change",()=>{state.isUpfront=chkUpfront.checked;upfrontRow.style.display=state.isUpfront?"":"none";recalc();});
+    inUpfrontDisc.addEventListener("input",()=>{let v=Number(inUpfrontDisc.value);if(!isFinite(v)) v=DEFAULT_UPFRONT_DISC;state.upfrontDisc=Math.max(0,Math.min(.5,v));recalc();});
+
+    // Add-on: Accordion
+    let accOpen=true;
+    const animateHeight=(el,start,end,dur=260)=>el.animate([{height:start+"px"},{height:end+"px"}],{duration:dur,easing:"cubic-bezier(0.22,1,0.36,1)"});
+    addonAccHeader.addEventListener("click",()=>{
+      const el=addonAccBody; if(!el) return;
+      if(accOpen){
+        const start=el.getBoundingClientRect().height;
+        const anim=animateHeight(el,start,0,220);
+        anim.onfinish=()=>{el.style.height="0px";el.setAttribute("aria-hidden","true");addonCaret.classList.remove("caretOpen");accOpen=false;}
+      }else{
+        el.style.height="auto"; const end=el.scrollHeight; el.style.height="0px";
+        const anim=animateHeight(el,0,end,260);
+        anim.onfinish=()=>{el.style.height="auto";el.removeAttribute("aria-hidden");addonCaret.classList.add("caretOpen");accOpen=true;}
+      }
+    });
+
+    // Add-on options
+    kwRadios.addEventListener("change",(e)=>{if(e.target && e.target.name==="kw"){state.kwBundle=parseInt(e.target.value,10);recalc();}});
+    adminRadios.addEventListener("change",(e)=>{if(e.target && e.target.name==="admin"){state.adminBand=e.target.value;recalc();}});
+    chkUnstrBase.addEventListener("change",()=>{
+      state.unstrBase=chkUnstrBase.checked;
+      [...unstrFilterGroup.querySelectorAll('input[name="unstrFilter"]')].forEach(inp=>{inp.disabled=!state.unstrBase; if(!state.unstrBase && inp.value==="0") inp.checked=true;});
+      unstrFilterGroup.classList.toggle("dimmed",!state.unstrBase);
+      state.unstrFilter = state.unstrBase ? state.unstrFilter : 0;
+      recalc();
+    });
+    unstrFilterGroup.addEventListener("change",(e)=>{if(e.target && e.target.name==="unstrFilter"){state.unstrFilter=parseInt(e.target.value,10);recalc();}});
+    chkRag.addEventListener("change",()=>{state.rag=chkRag.checked;recalc();});
+    chkGraphRag.addEventListener("change",()=>{state.graphRag=chkGraphRag.checked;recalc();});
+    chkDocACL.addEventListener("change",()=>{state.docACL=chkDocACL.checked;recalc();});
+    chkCtxSearch.addEventListener("change",()=>{state.ctxSearch=chkCtxSearch.checked;recalc();});
+
+    // Recurring addon
+    btnPackDec.addEventListener("click",()=>{state.tokenPacks=Math.max(0,(parseInt(inTokenPacks.value||"0",10)||0)-1);inTokenPacks.value=String(state.tokenPacks);recalc();});
+    btnPackInc.addEventListener("click",()=>{state.tokenPacks=Math.min(100,(parseInt(inTokenPacks.value||"0",10)||0)+1);inTokenPacks.value=String(state.tokenPacks);recalc();});
+    inTokenPacks.addEventListener("input",()=>{let v=parseInt(inTokenPacks.value||"0",10);if(!isFinite(v)) v=0;state.tokenPacks=Math.max(0,Math.min(100,v));inTokenPacks.value=String(state.tokenPacks);recalc();});
+
+    // VAT / Actions
+    chkVat.addEventListener("change",()=>{state.vatOn=chkVat.checked;recalc();});
+    btnPrint.addEventListener("click",()=>window.print());
+    btnSave.addEventListener("click",()=>{
+      const termDisc=TERM_DISCOUNT[state.term], safeSeats=Math.max(state.seats,MIN_SEATS);
+      const seatMonthly=state.plan.seatPrice*safeSeats;
+      const addonMonthly=state.tokenPacks*TOKEN_PACK_PRICE;
+      const recurringMonthlyBase=seatMonthly+addonMonthly;
+      const recurringMonthly=Math.round(recurringMonthlyBase*(1-termDisc));
+      const recurringUpfront=state.isUpfront?Math.round(recurringMonthly*(1-state.upfrontDisc)):recurringMonthly;
+      const oneTime=getOneTime();
+      const firstInvoice=recurringMonthly+oneTime;
+      const contractMonthly=recurringMonthly*state.term+oneTime;
+      const contractUpfront=recurringUpfront*state.term+oneTime;
+      const displayed=state.isUpfront?contractUpfront:contractMonthly;
+
+      const snapshot={
+        id:"Q"+Date.now(),
+        tokens: state.tokens,
+        plan:state.plan.code,seats:safeSeats,term:state.term,
+        discounts:{termDisc,upfrontDisc:state.isUpfront?state.upfrontDisc:0},
+        addons:{tokenPacks:state.tokenPacks,keywordBundle:state.kwBundle,adminBand:state.adminBand,unstructured:{base:state.unstrBase,filter:state.unstrFilter},rag:state.rag,graphRag:state.graphRag,docACL:state.docACL,ctxSearch:state.ctxSearch},
+        totals:{recurringMonthly,recurringMonthlyUpfront:recurringUpfront,oneTime,firstInvoiceMonthly:firstInvoice,contractTotalMonthly:contractMonthly,contractTotalUpfront:contractUpfront,displayedContractTotal:displayed},
+        vat:{on:state.vatOn,rate:VAT_RATE},
+        createdAt:new Date().toISOString(),
+      };
+      const key="cubig_estimates"; const all=JSON.parse(localStorage.getItem(key)||"[]"); all.unshift(snapshot); localStorage.setItem(key,JSON.stringify(all));
+      saveMsg.textContent=`견적이 저장되었습니다. (ID: ${snapshot.id})  /estimate/${snapshot.id} (열람 모드 예정)`;
+      saveMsg.style.display=""; setTimeout(()=>saveMsg.style.display="none",4500);
+    });
+
+    /* ===== 초기화 ===== */
+    document.querySelector('input[name="term"][value="12"]').checked=true;
+    document.querySelector('input[name="kw"][value="0"]').checked=true;
+    document.querySelector('input[name="admin"][value="200_500"]').checked=true;
+    document.querySelector('input[name="unstrFilter"][value="0"]').checked=true;
+
+    // 토큰 → 플랜 반영 & 사용량 패널 초기 렌더
+    applyPlanFromToken();
+    updateUsagePanels();
+    recalc();
+
+    window.addEventListener("load", ()=>{ updateUsagePanels(); recalc(); });
+  </script>
+</body>
+</html>
