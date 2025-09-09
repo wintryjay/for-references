@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>LLM Capsule — Enterprise AI Security</title>
-  <meta name="description" content="B2B AI 보안/데이터 보호를 위한 LLM Capsule" />
+  <meta name="description" content="B2B AI 보안/데이터 보호를 위한 LLM Capsule 랜딩 페이지. 한·영 지원, 데모, 인증지표, 요금제, FAQ 포함." />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
@@ -89,13 +89,31 @@
     .container{max-width:1200px; margin:0 auto; padding:60px 20px}
     .section-title{font-size:28px; margin:0 0 10px}
     .section-sub{color:var(--muted); margin:0 0 26px; line-height:1.7}
-    .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}
-    .card{background:linear-gradient(180deg,var(--card),var(--card-2)); border:1px solid var(--line); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow)}
-    .card h3{margin:0 0 10px; font-size:20px}
-    .card ul{margin:10px 0 0 18px; color:#c6d7ff; line-height:1.8}
-    .card .cta{margin-top:16px}
-    .cta-link{color:#a8c2ff; text-decoration:none; font-weight:700}
-    .cta-link:hover{text-decoration:underline}
+
+    /* POSITIONING: split 3 blocks with alt alignment */
+    .pos-wrap{display:flex; flex-direction:column; gap:22px}
+    .pos-block{
+      display:grid; grid-template-columns:1.1fr .9fr; gap:22px;
+      background:linear-gradient(180deg,var(--card),var(--card-2)); border:1px solid var(--line); border-radius:var(--radius); padding:24px;
+      box-shadow:var(--shadow)
+    }
+    .pos-block.reverse{grid-template-columns:.9fr 1.1fr}
+    .pos-txt h3{margin:0 0 10px; font-size:20px}
+    .pos-txt p{color:#b7c7ea; margin:0 0 12px}
+    .pos-txt ul{margin:8px 0 0 18px; color:#c6d7ff; line-height:1.8}
+    .pos-txt .cta{margin-top:14px}
+    .pos-art{
+      border:1px solid rgba(255,255,255,.12); border-radius:18px; background:
+        linear-gradient(135deg, rgba(54,91,212,.18), rgba(34,197,94,.18));
+      display:flex; align-items:center; justify-content:center; min-height:220px; position:relative; overflow:hidden
+    }
+    .pill{
+      width:260px; height:120px; border-radius:100px;
+      background:linear-gradient(90deg, rgba(54,91,212,.85) 0 50%, rgba(34,197,94,.85) 50% 100%);
+      box-shadow: inset 0 -10px 24px rgba(0,0,0,.35), 0 18px 28px rgba(0,0,0,.35);
+      border:1px solid rgba(255,255,255,.14)
+    }
+    .art-label{position:absolute; bottom:10px; right:12px; color:#cfe1ff; font-size:12px; opacity:.85}
 
     /* DEMO */
     .demo{background:
@@ -120,10 +138,9 @@
     .p-card{background:linear-gradient(180deg,#0c1326,#0f1a34); border:1px solid var(--line); border-radius:18px; padding:24px}
     .p-card h4{margin:0 0 6px; font-size:20px}
     .price{font-size:22px; font-weight:800; margin:0 0 12px}
-    .p-desc{color:#b7c7ea; margin:0 0 14px}
     .p-card ul{margin:8px 0 0 18px; color:#cfe1ff; line-height:1.8}
     .p-card ul.sub{margin:6px 0 0 18px; opacity:.9}
-    .trial, .buy{margin-top:14px}
+    .buy{margin-top:14px}
     .pricing-cta-text{margin-top:14px}
     .text-cta{color:#a8c2ff; text-decoration:underline; font-weight:700; cursor:pointer}
     .text-cta:hover{text-decoration:none}
@@ -134,6 +151,33 @@
     summary{cursor:pointer; font-weight:700}
     details p{color:#c9d8ff; margin:12px 0 6px; line-height:1.7}
 
+    /* Big CTA banner below FAQ */
+    .cta-banner{
+      border-top:1px solid var(--line);
+      background:linear-gradient(180deg,#0a111f,#0a0f1b);
+    }
+    .cta-band{
+      display:grid; grid-template-columns:1.2fr .8fr; gap:18px;
+      background:linear-gradient(180deg,#0d1426,#0f1a33);
+      border:1px solid var(--line); border-radius:18px; padding:24px; box-shadow:var(--shadow)
+    }
+    .cta-band h3{margin:0 0 8px; font-size:24px}
+    .cta-band ul{margin:8px 0 0 18px; color:#cfe1ff; line-height:1.8}
+    .cta-panel{display:flex; align-items:center; justify-content:center}
+    .cta-big{font-size:18px; padding:14px 22px}
+
+    /* Floating actions (bottom-right) */
+    .float-actions{
+      position:fixed; right:22px; bottom:22px; z-index:60; display:flex; flex-direction:column; gap:10px
+    }
+    .fab{
+      width:48px; height:48px; border-radius:999px; display:flex; align-items:center; justify-content:center;
+      border:1px solid var(--line); background:rgba(255,255,255,.06); color:var(--ink); font-weight:800; cursor:pointer;
+      box-shadow:var(--shadow)
+    }
+    .fab:hover{background:rgba(255,255,255,.12)}
+    .fab span{font-size:12px}
+
     /* FOOTER */
     footer{border-top:1px solid var(--line); background:linear-gradient(180deg,#0a111f,#0a0f1b)}
     .foot small{color:#97a8c8}
@@ -143,9 +187,10 @@
     @media (max-width:1024px){
       .slide{grid-template-columns:1fr; gap:22px}
       .visual{height:260px}
-      .grid-3{grid-template-columns:1fr}
       .stats{grid-template-columns:repeat(2,1fr)}
       .pricing .cards{grid-template-columns:1fr}
+      .cta-band{grid-template-columns:1fr}
+      .pos-block, .pos-block.reverse{grid-template-columns:1fr}
     }
     @media (max-width:640px){
       .slide h1{font-size:34px}
@@ -226,47 +271,73 @@
     </div>
   </header>
 
-  <!-- POSITIONING -->
+  <!-- POSITIONING (split into 3 sub-sections) -->
   <section id="positioning" class="container">
     <h2 class="section-title" data-i18n="pos_title">You Choose How AI Works for You</h2>
     <p class="section-sub" data-i18n="pos_sub">Because AI for business should always be safe.</p>
 
-    <div class="grid-3">
-      <!-- Block 1 -->
-      <article class="card">
-        <h3 data-i18n="pos1_title">You Choose How AI Works for You</h3>
-        <p class="section-sub" data-i18n="pos1_sub">Because AI for business should always be safe.</p>
-        <ul id="pos1_list">
-          <li>Complete Protection of Sensitive Data in AI Usage — A four-step framework of detection, protection, utilization, and recovery.</li>
-          <li>Customizable Data Protection — Tailored to corporate policies and environments.</li>
-          <li>Flexible De-identification Methods — Optimized protection strategies for every situation.</li>
-        </ul>
-        <div class="cta"><a href="#demo" class="cta-link" data-i18n="pos1_cta">Learn more</a></div>
-      </article>
+    <div class="pos-wrap">
+      <!-- POS 1: 좌 텍스트 / 우 이미지 -->
+      <div class="pos-block" id="pos1">
+        <div class="pos-txt">
+          <h3 data-i18n="pos1_title">You Choose How AI Works for You</h3>
+          <p data-i18n="pos1_sub">Because AI for business should always be safe.</p>
+          <ul id="pos1_list">
+            <li>Complete Protection of Sensitive Data in AI Usage — A four-step framework of detection, protection, utilization, and recovery.</li>
+            <li>Customizable Data Protection — Tailored to corporate policies and environments.</li>
+            <li>Flexible De-identification Methods — Optimized protection strategies for every situation.</li>
+          </ul>
+          <div class="cta">
+            <a href="#" class="cta-link pos-learn" data-i18n="pos1_cta">Learn more</a>
+          </div>
+        </div>
+        <div class="pos-art" aria-hidden="true">
+          <div class="pill"></div>
+          <span class="art-label">Anonymize &amp; Recover</span>
+        </div>
+      </div>
 
-      <!-- Block 2 -->
-      <article class="card">
-        <h3 data-i18n="pos2_title">AI that works at enterprise scale</h3>
-        <p class="section-sub" data-i18n="pos2_sub">Smarter AI, valuable data — built for enterprise scale.</p>
-        <ul id="pos2_list">
-          <li>Seamless Public LLM Integration — ChatGPT, Claude, Gemini.</li>
-          <li>Large-Scale Document Processing &amp; Ontology Management.</li>
-          <li>RAG &amp; Graph RAG Support for accurate, trusted answers.</li>
-        </ul>
-      </article>
+      <!-- POS 2: 좌 이미지 / 우 텍스트 -->
+      <div class="pos-block reverse" id="pos2">
+        <div class="pos-art" aria-hidden="true">
+          <div class="pill" style="transform:rotate(12deg) scale(0.95)"></div>
+          <span class="art-label">Enterprise &amp; RAG</span>
+        </div>
+        <div class="pos-txt">
+          <h3 data-i18n="pos2_title">AI that works at enterprise scale</h3>
+          <p data-i18n="pos2_sub">Smarter AI, valuable data — built for enterprise scale.</p>
+          <ul id="pos2_list">
+            <li>Seamless Public LLM Integration — ChatGPT, Claude, Gemini.</li>
+            <li>Large-Scale Document Processing &amp; Ontology Management.</li>
+            <li>RAG &amp; Graph RAG Support for accurate, trusted answers.</li>
+          </ul>
+          <div class="cta">
+            <a href="#" class="cta-link pos-learn" data-i18n="pos1_cta">Learn more</a>
+          </div>
+        </div>
+      </div>
 
-      <!-- Block 3 -->
-      <article class="card">
-        <h3 data-i18n="pos3_title">Compliance Ready, Threat Resilient</h3>
-        <p class="section-sub" data-i18n="pos3_sub">Enterprise-grade AI security and management for safe, compliant, and reliable operations.</p>
-        <ul id="pos3_list">
-          <li>Context-Aware AI Detection.</li>
-          <li>Defense Against Prompt Injection &amp; Jailbreak.</li>
-          <li>Compliance with Global Security Standards.</li>
-          <li>Admin-Centric User Management.</li>
-          <li>On-Premises Deployment Support.</li>
-        </ul>
-      </article>
+      <!-- POS 3: 좌 텍스트 / 우 이미지 -->
+      <div class="pos-block" id="pos3">
+        <div class="pos-txt">
+          <h3 data-i18n="pos3_title">Compliance Ready, Threat Resilient</h3>
+          <p data-i18n="pos3_sub">Enterprise-grade AI security and management for safe, compliant, and reliable operations.</p>
+          <ul id="pos3_list">
+            <li>Context-Aware AI Detection.</li>
+            <li>Defense Against Prompt Injection &amp; Jailbreak.</li>
+            <li>Compliance with Global Security Standards.</li>
+            <li>Admin-Centric User Management.</li>
+            <li>On-Premises Deployment Support.</li>
+          </ul>
+          <div class="cta">
+            <a href="#" class="cta-link pos-learn" data-i18n="pos1_cta">Learn more</a>
+          </div>
+        </div>
+        <div class="pos-art" aria-hidden="true">
+          <div class="pill" style="transform:scale(0.92)"></div>
+          <span class="art-label">Compliance &amp; Admin</span>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -281,7 +352,7 @@
         <div class="demo-img">DEMO IMAGE / VIDEO PLACEHOLDER</div>
         <div>
           <a href="#pricing" class="btn primary" data-i18n="cta_start">Get Started</a>
-          <a href="#contact" class="btn" data-i18n="cta_contact">Contact</a>
+          <a href="#contact-banner" class="btn" data-i18n="cta_contact">Contact</a>
         </div>
       </div>
     </div>
@@ -313,18 +384,18 @@
         <h4 data-i18n="plan_basic">Basic</h4>
         <p class="price" data-i18n="plan_basic_price">₩10,500 ~ /월</p>
         <ul id="plan_basic_list"></ul>
-        <button class="btn primary buy" data-i18n="plan_buy">구매</button>
+        <button class="btn primary buy" data-plan="basic" data-i18n="plan_buy">구매</button>
       </div>
       <!-- Custom -->
       <div class="p-card">
         <h4 data-i18n="plan_custom">Custom</h4>
         <p class="price" data-i18n="plan_custom_price">₩15,500 ~ /월</p>
         <ul id="plan_custom_list"></ul>
-        <button class="btn primary buy" data-i18n="plan_buy">구매</button>
+        <button class="btn primary buy" data-plan="custom" data-i18n="plan_buy">구매</button>
       </div>
     </div>
     <div class="pricing-cta-text">
-      <a href="#plan_Calculator_1" class="text-cta" data-i18n="pricing_try_text">제품을 미리 경험해보세요.</a>
+      <a href="#demo" class="text-cta" data-i18n="pricing_try_text">제품을 미리 경험해보세요.</a>
     </div>
   </section>
 
@@ -334,7 +405,25 @@
     <div class="items" id="faqList"></div>
   </section>
 
-  <!-- CONTACT (anchor target) -->
+  <!-- BIG CTA BANNER below FAQ -->
+  <section id="contact-banner" class="cta-banner">
+    <div class="container">
+      <div class="cta-band">
+        <div>
+          <h3 data-i18n="big_title">Find the plan that fits your business</h3>
+          <ul id="big_list">
+            <li>Request tailored guidance for your organization</li>
+            <li>Request detailed product information on LLM Capsule</li>
+          </ul>
+        </div>
+        <div class="cta-panel">
+          <a class="btn primary cta-big" href="mailto:contact@cubig.ai" data-i18n="nav_contact">문의하기</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTACT anchor (for legacy anchors) -->
   <div id="contact" style="height:1px"></div>
 
   <!-- FOOTER -->
@@ -349,12 +438,18 @@
     </div>
   </footer>
 
+  <!-- Floating actions -->
+  <div class="float-actions" aria-label="Quick actions">
+    <button class="fab" id="toTop" title="Top">↑</button>
+    <button class="fab" id="toContact" title="Contact">✉</button>
+  </div>
+
   <script>
     // ---------- Year
     document.getElementById('y').textContent = new Date().getFullYear();
 
     // ---------- Slider (2 slides, 5s + progress gauge)
-    const SLIDE_MS = 5000; // 요청사항: 5초
+    const SLIDE_MS = 5000;
     const slides = document.getElementById('slides');
     const slider = document.getElementById('slider');
     const dots = document.querySelectorAll('.dot');
@@ -371,7 +466,6 @@
 
     const resetGauge = ()=>{
       gbar.classList.remove('animate');
-      // 강제 reflow로 애니메이션 리셋
       void gbar.offsetWidth;
       gbar.style.setProperty('--dur', (SLIDE_MS/1000)+'s');
       gbar.style.animationPlayState = 'running';
@@ -380,9 +474,7 @@
 
     const startCycle = ()=>{
       stopCycle();
-      timerId = setTimeout(()=> {
-        switchTo((idx+1)%2);
-      }, SLIDE_MS);
+      timerId = setTimeout(()=> switchTo((idx+1)%2), SLIDE_MS);
     };
 
     const stopCycle = ()=>{
@@ -390,14 +482,9 @@
       gbar.style.animationPlayState = 'paused';
     };
 
-    // 초기 시작
     resetGauge(); startCycle();
-
-    // Hover 시 일시정지/재시작 (재시작 시 새 5초로 시작)
     slider.addEventListener('mouseenter', stopCycle);
     slider.addEventListener('mouseleave', ()=>{ resetGauge(); startCycle(); });
-
-    // Dots 클릭
     dots.forEach((d,i)=>d.addEventListener('click', ()=>switchTo(i)));
 
     // ---------- Scroll spy
@@ -421,7 +508,7 @@
     // ---------- Simple actions
     document.getElementById('loginBtn').onclick=()=>alert('로그인 페이지 연동 예정입니다.');
     document.getElementById('contactBtn').onclick=()=>location.href='mailto:contact@cubig.ai';
-    document.getElementById('brochureBtn').onclick=(e)=>{ e.preventDefault(); alert('제품소개서 링크를 연결해 주세요. (예: /files/Brochure_LLM.pdf)'); };
+    document.getElementById('brochureBtn')?.addEventListener('click',(e)=>{ e.preventDefault(); alert('제품소개서 링크를 연결해 주세요. (예: /files/Brochure_LLM.pdf)'); });
 
     // ---------- FAQ data (both languages)
     const faqData = {
@@ -444,9 +531,9 @@
         ["비전문가도 쉽게 사용할 수 있나요?","관리자 프리셋과 가이드 플로우로 누구나 쉽게 사용할 수 있습니다."]
       ]
     };
-    const faqList = document.getElementById('faqList');
+    const faqListEl = document.getElementById('faqList');
 
-    // ---------- i18n dictionary (추가: 요금제 텍스트/리스트/가격/구매)
+    // ---------- i18n dictionary (확장: pos CTA, big banner)
     const i18n = {
       en:{
         nav_login:"Login", nav_contact:"Contact",
@@ -525,7 +612,13 @@
         plan_buy:"Buy",
         pricing_try_text:"Try the product first.",
 
-        faq_title:"Frequently Asked Questions (FAQ)"
+        faq_title:"Frequently Asked Questions (FAQ)",
+
+        big_title:"Find the plan that fits your business",
+        big_list:[
+          "Request tailored guidance for your organization",
+          "Request detailed product information on LLM Capsule"
+        ]
       },
       ko:{
         nav_login:"로그인", nav_contact:"문의하기",
@@ -604,33 +697,36 @@
         plan_buy:"구매",
         pricing_try_text:"제품을 미리 경험해보세요.",
 
-        faq_title:"자주 묻는 질문"
+        faq_title:"자주 묻는 질문",
+
+        big_title:"귀사에 꼭 맞는 요금제를 찾아보세요.",
+        big_list:[
+          "기업 맞춤형 안내 요청하기",
+          "LLM Capsule 상세 자료 요청하기"
+        ]
       }
     };
 
-    // ---------- Renderers
-    const faqListEl = document.getElementById('faqList');
-    const applyFaq = (items)=>{
-      faqListEl.innerHTML = items.map(([q,a])=>(
-        `<details><summary>${q}</summary><p>${a}</p></details>`
-      )).join('');
-    };
+    // ---------- Render helpers
+    const faqList = document.getElementById('faqList');
+    const applyFaq = (items)=>{ faqList.innerHTML = items.map(([q,a])=>`<details><summary>${q}</summary><p>${a}</p></details>`).join(''); };
 
     const renderPricing = (lang)=>{
-      // Basic list
       const b = i18n[lang].plan_basic_list || [];
       document.getElementById('plan_basic_list').innerHTML = b.map(x=>`<li>${x}</li>`).join('');
 
-      // Custom list + addons (중첩 리스트)
       const c = i18n[lang].plan_custom_list || [];
       const addons = i18n[lang].plan_custom_addons || [];
-      const html = c.map((x,ix)=>{
-        if (x.includes('Add-on')) {
-          return `<li>${x}<ul class="sub">${addons.map(a=>`<li>${a}</li>`).join('')}</ul></li>`;
-        }
-        return `<li>${x}</li>`;
-      }).join('');
+      const html = c.map((x)=> x.includes('Add-on')
+        ? `<li>${x}<ul class="sub">${addons.map(a=>`<li>${a}</li>`).join('')}</ul></li>`
+        : `<li>${x}</li>`).join('');
       document.getElementById('plan_custom_list').innerHTML = html;
+    };
+
+    const renderBigBanner = (lang)=>{
+      const list = i18n[lang].big_list || [];
+      const ul = document.getElementById('big_list');
+      ul.innerHTML = list.map(x=>`<li>${x}</li>`).join('');
     };
 
     // ---------- Apply language
@@ -640,49 +736,47 @@
       localStorage.setItem('LANG', lang);
       document.getElementById('langBtn').textContent = (lang==='ko'?'KR':'EN')+' ▾';
 
-      // text nodes
       document.querySelectorAll('[data-i18n]').forEach(el=>{
-        const k = el.getAttribute('data-i18n');
-        const t = i18n[lang][k];
+        const k = el.getAttribute('data-i18n'), t = i18n[lang][k];
         if(typeof t === 'string') el.innerHTML = t;
       });
 
-      // lists
       const fillList=(id,key)=>{
-        const ul = document.getElementById(id);
-        const arr = i18n[lang][key];
-        if(Array.isArray(arr) && ul){
-          ul.innerHTML = arr.map(li=>`<li>${li}</li>`).join('');
-        }
+        const ul = document.getElementById(id), arr = i18n[lang][key];
+        if(Array.isArray(arr) && ul){ ul.innerHTML = arr.map(li=>`<li>${li}</li>`).join(''); }
       };
       fillList('pos1_list','pos1_list');
       fillList('pos2_list','pos2_list');
-
       const pos3 = i18n[lang]['pos3_list'];
-      if(Array.isArray(pos3)){
-        document.getElementById('pos3_list').innerHTML =
-          pos3.map(li=>`<li>${li}</li>`).join('');
-      }
+      if(Array.isArray(pos3)){ document.getElementById('pos3_list').innerHTML = pos3.map(li=>`<li>${li}</li>`).join(''); }
 
-      // pricing
       renderPricing(lang);
-
-      // FAQ
       applyFaq(faqData[lang]);
+      renderBigBanner(lang);
     };
     applyLang(LANG);
-    document.getElementById('langBtn').addEventListener('click', ()=>{
-      applyLang(LANG==='ko'?'en':'ko');
+    document.getElementById('langBtn').addEventListener('click', ()=> applyLang(LANG==='ko'?'en':'ko'));
+
+    // 구매 버튼 → 견적 페이지 이동(요청 반영)
+    document.querySelectorAll('.buy').forEach(btn=>{
+      btn.addEventListener('click',(e)=>{
+        e.preventDefault();
+        const plan = btn.dataset.plan || 'basic';
+        window.location.href = `plan_Calculator_1.html?plan=${encodeURIComponent(plan)}`;
+      });
     });
 
-    // 구매 버튼 클릭
-  document.querySelectorAll('.buy').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      window.location.href = 'plan_Calculator_1.html';
+    // “자세히 알아보기” → 시스템 알럿
+    document.querySelectorAll('.pos-learn').forEach(a=>{
+      a.addEventListener('click',(e)=>{
+        e.preventDefault();
+        alert(LANG==='ko' ? '페이지 준비중입니다.' : 'Page under preparation.');
+      });
     });
-  });
 
+    // Floating actions
+    document.getElementById('toTop').addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+    document.getElementById('toContact').addEventListener('click', ()=> location.href='mailto:contact@cubig.ai');
   </script>
 </body>
 </html>
