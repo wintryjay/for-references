@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>LLM Capsule — Enterprise AI Security</title>
+  <meta name="description" content="B2B AI 보안/데이터 보호를 위한 LLM Capsule" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+KR:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#0b1220;
+      --panel:#0f172a;
+      --ink:#e6ecff;
+      --muted:#9fb0d1;
+      --brand:#365bd4;
+      --brand-2:#22c55e;
+      --line:rgba(255,255,255,.08);
+      --card:#0d1326;
+      --card-2:#111a33;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0; background:
+      radial-gradient(1200px 900px at 90% -10%, rgba(54,91,212,.25), transparent 55%),
+      radial-gradient(900px 700px at 0% 0%, rgba(34,197,94,.18), transparent 40%),
+      var(--bg);
+      color:var(--ink);
+      font-family:'Inter','Noto Sans KR',system-ui,Segoe UI,Arial,sans-serif;
+    }
+
+    /* NAV */
+    .nav{position:sticky; top:0; z-index:50; backdrop-filter:saturate(160%) blur(6px);
+      background:linear-gradient(to bottom, rgba(10,14,25,.7), rgba(10,14,25,.35)); border-bottom:1px solid var(--line)}
+    .nav-inner{max-width:1200px; margin:0 auto; padding:14px 20px; display:flex; align-items:center; gap:18px}
+    .logo{display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); font-weight:800; letter-spacing:.2px; font-size:18px}
+    .logo-badge{width:28px; height:28px; border-radius:999px;
+      background:conic-gradient(from 210deg, var(--brand), var(--brand-2));
+      box-shadow:inset 0 0 0 2px rgba(255,255,255,.15)}
+    .nav-links{margin-left:8px; display:flex; gap:14px; flex:1; align-items:center}
+    .nav-links a{color:var(--muted); text-decoration:none; font-weight:600; font-size:14px; padding:8px 10px; border-radius:10px}
+    .nav-links a.active, .nav-links a:hover{color:var(--ink); background:rgba(255,255,255,.05)}
+    .nav-cta{display:flex; gap:10px; align-items:center}
+    .btn{border:1px solid var(--line); color:var(--ink); background:transparent; padding:10px 14px; border-radius:12px; font-weight:700; cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg, var(--brand), #2b49a8); border-color:transparent}
+    .btn.ghost{background:rgba(255,255,255,.03)}
+    .lang{border:1px solid var(--line); border-radius:999px; padding:6px 10px; background:rgba(255,255,255,.03);
+      color:var(--muted); font-weight:700; cursor:pointer}
+
+    /* HERO (slider) */
+    .hero{border-bottom:1px solid var(--line)}
+    .hero-wrap{max-width:1200px; margin:0 auto; padding:34px 20px 26px}
+    .slider{position:relative; overflow:hidden; border-radius:22px; background:linear-gradient(180deg,#0b1328,#0f1530);
+      box-shadow:var(--shadow); border:1px solid var(--line)}
+    .slides{display:flex; transition:transform .6s cubic-bezier(.22,.7,.25,1)}
+    .slide{min-width:100%; display:grid; grid-template-columns:1.08fr .92fr; gap:12px; align-items:center; padding:48px 42px}
+    .slide h1{font-size:42px; line-height:1.12; margin:0 0 16px; letter-spacing:-.2px;
+      background:linear-gradient(120deg, #e9eeff 0%, #d7e3ff 60%, #c3d7ff 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent}
+    .slide p{color:#bcd0ff; font-size:16.5px; line-height:1.7; margin:0 0 24px}
+    .hero-ctas{display:flex; gap:10px; flex-wrap:wrap}
+    .btn.link{background:#19243f; border:1px solid #22325a}
+    .visual{position:relative; height:360px; display:flex; align-items:center; justify-content:center}
+    .capsule{width:340px; height:160px; border-radius:100px; position:relative;
+      background:
+        linear-gradient(90deg, rgba(54,91,212,.9) 0 50%, rgba(34,197,94,.9) 50% 100%),
+        radial-gradient(120px 120px at 25% 50%, rgba(255,255,255,.28), transparent 60%),
+        radial-gradient(120px 120px at 75% 50%, rgba(255,255,255,.28), transparent 60%);
+      box-shadow: inset 0 -16px 30px rgba(0,0,0,.35), 0 24px 40px rgba(0,0,0,.45);
+      border:1px solid rgba(255,255,255,.15)}
+    .capsule:before{content:""; position:absolute; inset:-14px; border-radius:120px;
+      background: radial-gradient(200px 140px at 30% 20%, rgba(255,255,255,.08), transparent 60%); filter:blur(2px)}
+    .dots{position:absolute; bottom:12px; left:50%; transform:translateX(-50%); display:flex; gap:8px; z-index:2}
+    .dot{width:8px; height:8px; border-radius:50%; background:#344266}
+    .dot.active{background:#7aa2ff}
+
+    /* HERO gauge */
+    .gauge{position:absolute; left:0; right:0; bottom:0; height:4px; background:rgba(255,255,255,.08)}
+    .gbar{height:100%; width:0; background:linear-gradient(90deg, var(--brand), var(--brand-2))}
+    .gbar.animate{animation:progress var(--dur,5s) linear forwards}
+    @keyframes progress{from{width:0}to{width:100%}}
+
+    /* SECTION base */
+    section{scroll-margin-top:78px}
+    .container{max-width:1200px; margin:0 auto; padding:60px 20px}
+    .section-title{font-size:28px; margin:0 0 10px}
+    .section-sub{color:var(--muted); margin:0 0 26px; line-height:1.7}
+    .grid-3{display:grid; grid-template-columns:repeat(3,1fr); gap:18px}
+    .card{background:linear-gradient(180deg,var(--card),var(--card-2)); border:1px solid var(--line); border-radius:var(--radius); padding:24px; box-shadow:var(--shadow)}
+    .card h3{margin:0 0 10px; font-size:20px}
+    .card ul{margin:10px 0 0 18px; color:#c6d7ff; line-height:1.8}
+    .card .cta{margin-top:16px}
+    .cta-link{color:#a8c2ff; text-decoration:none; font-weight:700}
+    .cta-link:hover{text-decoration:underline}
+
+    /* DEMO */
+    .demo{background:
+        radial-gradient(700px 500px at 100% 0%, rgba(54,91,212,.18), transparent 55%),
+        radial-gradient(600px 500px at 0% 30%, rgba(34,197,94,.14), transparent 60%);
+      border-top:1px solid var(--line); border-bottom:1px solid var(--line)}
+    .demo-box{border:1px dashed rgba(255,255,255,.2); border-radius:22px; padding:28px; text-align:center;
+      background:linear-gradient(180deg,#0d1426,#0e1a36)}
+    .demo-img{margin:18px auto 6px; max-width:860px; height:340px; border-radius:16px;
+      background:linear-gradient(135deg, rgba(54,91,212,.22), rgba(34,197,94,.22));
+      border:1px solid rgba(255,255,255,.12); box-shadow:var(--shadow);
+      display:flex; align-items:center; justify-content:center; color:#cfe1ff; font-weight:700; letter-spacing:.4px}
+
+    /* CERTS */
+    .stats{display:grid; grid-template-columns:repeat(4,1fr); gap:14px}
+    .stat{background:linear-gradient(180deg,#0e162b 0%, #0f1a33 100%); border:1px solid var(--line); border-radius:16px; padding:20px; text-align:center}
+    .stat b{display:block; font-size:30px; margin-bottom:8px}
+    .stat span{color:var(--muted); font-size:14px}
+
+    /* PRICING */
+    .pricing .cards{display:grid; grid-template-columns:1fr 1fr; gap:18px}
+    .p-card{background:linear-gradient(180deg,#0c1326,#0f1a34); border:1px solid var(--line); border-radius:18px; padding:24px}
+    .p-card h4{margin:0 0 6px; font-size:20px}
+    .price{font-size:22px; font-weight:800; margin:0 0 12px}
+    .p-desc{color:#b7c7ea; margin:0 0 14px}
+    .p-card ul{margin:8px 0 0 18px; color:#cfe1ff; line-height:1.8}
+    .p-card ul.sub{margin:6px 0 0 18px; opacity:.9}
+    .trial, .buy{margin-top:14px}
+    .pricing-cta-text{margin-top:14px}
+    .text-cta{color:#a8c2ff; text-decoration:underline; font-weight:700; cursor:pointer}
+    .text-cta:hover{text-decoration:none}
+
+    /* FAQ */
+    .faq .items{max-width:900px}
+    details{background:#0f1a33; border:1px solid var(--line); border-radius:14px; padding:14px 18px; margin-bottom:10px}
+    summary{cursor:pointer; font-weight:700}
+    details p{color:#c9d8ff; margin:12px 0 6px; line-height:1.7}
+
+    /* FOOTER */
+    footer{border-top:1px solid var(--line); background:linear-gradient(180deg,#0a111f,#0a0f1b)}
+    .foot small{color:#97a8c8}
+    .foot p{margin:6px 0}
+
+    /* Responsive */
+    @media (max-width:1024px){
+      .slide{grid-template-columns:1fr; gap:22px}
+      .visual{height:260px}
+      .grid-3{grid-template-columns:1fr}
+      .stats{grid-template-columns:repeat(2,1fr)}
+      .pricing .cards{grid-template-columns:1fr}
+    }
+    @media (max-width:640px){
+      .slide h1{font-size:34px}
+      .nav-links{display:none}
+    }
+  </style>
+</head>
+<body>
+
+  <!-- NAV -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="#top" class="logo" aria-label="LLM Capsule Home">
+        <span class="logo-badge" aria-hidden="true"></span>
+        <span>LLM&nbsp;Capsule</span>
+      </a>
+      <div class="nav-links" id="navLinks">
+        <a href="#positioning" data-spy>Positioning</a>
+        <a href="#demo" data-spy>Demo</a>
+        <a href="#certs" data-spy>Certifications</a>
+        <a href="#pricing" data-spy>Plans</a>
+        <a href="#faq" data-spy>FAQ</a>
+      </div>
+      <div class="nav-cta">
+        <button class="btn ghost" id="loginBtn" data-i18n="nav_login">로그인</button>
+        <button class="btn" id="contactBtn" data-i18n="nav_contact">문의하기</button>
+        <button class="lang" id="langBtn" aria-label="Switch language">KR ▾</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero" id="top" role="banner" aria-label="Hero">
+    <div class="hero-wrap">
+      <div class="slider" id="slider">
+        <div class="slides" id="slides">
+          <!-- Slide 1 -->
+          <div class="slide">
+            <div>
+              <h1 data-i18n="hero1_title">The Essential Security Capsule<br>for AI Services</h1>
+              <p data-i18n="hero1_sub">
+                The essential security layer for AI services and agents—from government compliance and data protection to trusted, scalable operations that build user confidence.
+              </p>
+              <div class="hero-ctas">
+                <a href="#contact" class="btn link" data-i18n="cta_contact">Contact Us</a>
+                <a href="#demo" class="btn primary" data-i18n="cta_start">Get Started</a>
+                <a href="#" class="btn link" id="brochureBtn" data-i18n="cta_brochure">Download Brochure</a>
+              </div>
+            </div>
+            <div class="visual">
+              <div class="capsule" aria-hidden="true"></div>
+            </div>
+          </div>
+          <!-- Slide 2 -->
+          <div class="slide">
+            <div>
+              <h1 data-i18n="hero2_title">Capsule AI for What’s Next<br>Secure, Seamless for GenAI and Public LLMs</h1>
+              <p data-i18n="hero2_sub">
+                LLM Capsule bridges enterprises and AI platforms securely and seamlessly, empowering innovation with trusted data protection and compliance.
+              </p>
+              <div class="hero-ctas">
+                <a href="#contact" class="btn link" data-i18n="cta_contact">Contact Us</a>
+                <a href="#demo" class="btn primary" data-i18n="cta_start">Get Started</a>
+                <a href="#" class="btn link" data-i18n="cta_brochure">Download Brochure</a>
+              </div>
+            </div>
+            <div class="visual">
+              <div class="capsule" aria-hidden="true" style="transform:rotate(12deg) scale(0.96)"></div>
+            </div>
+          </div>
+        </div>
+        <div class="dots" aria-hidden="true">
+          <div class="dot active"></div><div class="dot"></div>
+        </div>
+        <!-- 시간 게이지바 -->
+        <div class="gauge" aria-hidden="true"><div class="gbar" id="gbar"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <!-- POSITIONING -->
+  <section id="positioning" class="container">
+    <h2 class="section-title" data-i18n="pos_title">You Choose How AI Works for You</h2>
+    <p class="section-sub" data-i18n="pos_sub">Because AI for business should always be safe.</p>
+
+    <div class="grid-3">
+      <!-- Block 1 -->
+      <article class="card">
+        <h3 data-i18n="pos1_title">You Choose How AI Works for You</h3>
+        <p class="section-sub" data-i18n="pos1_sub">Because AI for business should always be safe.</p>
+        <ul id="pos1_list">
+          <li>Complete Protection of Sensitive Data in AI Usage — A four-step framework of detection, protection, utilization, and recovery.</li>
+          <li>Customizable Data Protection — Tailored to corporate policies and environments.</li>
+          <li>Flexible De-identification Methods — Optimized protection strategies for every situation.</li>
+        </ul>
+        <div class="cta"><a href="#demo" class="cta-link" data-i18n="pos1_cta">Learn more</a></div>
+      </article>
+
+      <!-- Block 2 -->
+      <article class="card">
+        <h3 data-i18n="pos2_title">AI that works at enterprise scale</h3>
+        <p class="section-sub" data-i18n="pos2_sub">Smarter AI, valuable data — built for enterprise scale.</p>
+        <ul id="pos2_list">
+          <li>Seamless Public LLM Integration — ChatGPT, Claude, Gemini.</li>
+          <li>Large-Scale Document Processing &amp; Ontology Management.</li>
+          <li>RAG &amp; Graph RAG Support for accurate, trusted answers.</li>
+        </ul>
+      </article>
+
+      <!-- Block 3 -->
+      <article class="card">
+        <h3 data-i18n="pos3_title">Compliance Ready, Threat Resilient</h3>
+        <p class="section-sub" data-i18n="pos3_sub">Enterprise-grade AI security and management for safe, compliant, and reliable operations.</p>
+        <ul id="pos3_list">
+          <li>Context-Aware AI Detection.</li>
+          <li>Defense Against Prompt Injection &amp; Jailbreak.</li>
+          <li>Compliance with Global Security Standards.</li>
+          <li>Admin-Centric User Management.</li>
+          <li>On-Premises Deployment Support.</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+
+  <!-- DEMO -->
+  <section id="demo" class="demo">
+    <div class="container">
+      <h2 class="section-title" data-i18n="demo_title">Try our Web Demo</h2>
+      <p class="section-sub" data-i18n="demo_sub">
+        Experience the full journey — from context detection to LLM utilization to data recovery.
+      </p>
+      <div class="demo-box" aria-label="Interactive demo placeholder">
+        <div class="demo-img">DEMO IMAGE / VIDEO PLACEHOLDER</div>
+        <div>
+          <a href="#pricing" class="btn primary" data-i18n="cta_start">Get Started</a>
+          <a href="#contact" class="btn" data-i18n="cta_contact">Contact</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CERTIFICATIONS / PERFORMANCE -->
+  <section id="certs" class="container">
+    <h2 class="section-title" data-i18n="certs_title">Why We’re Different</h2>
+    <p class="section-sub" data-i18n="certs_desc">
+      Precise detection and efficient use that keep response quality intact after sensitive data is safeguarded.
+    </p>
+    <div class="stats">
+      <div class="stat"><b>98.10%</b><span data-i18n="certs_s1">Type I Error Detection Accuracy</span></div>
+      <div class="stat"><b>99.14%</b><span data-i18n="certs_s2">Type II Error Detection Accuracy</span></div>
+      <div class="stat"><b>100%</b><span data-i18n="certs_s3">Structured Personal Data Protection</span></div>
+      <div class="stat"><b>98%</b><span data-i18n="certs_s4">Response Similarity with Public LLMs</span></div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing" class="container pricing">
+    <h2 class="section-title" data-i18n="pricing_title">Plans</h2>
+    <p class="section-sub" data-i18n="pricing_desc">
+      Flexible on-premises pricing tailored to your organization’s scale and security requirements.
+    </p>
+    <div class="cards">
+      <!-- Basic -->
+      <div class="p-card">
+        <h4 data-i18n="plan_basic">Basic</h4>
+        <p class="price" data-i18n="plan_basic_price">₩10,500 ~ /월</p>
+        <ul id="plan_basic_list"></ul>
+        <button class="btn primary buy" data-i18n="plan_buy">구매</button>
+      </div>
+      <!-- Custom -->
+      <div class="p-card">
+        <h4 data-i18n="plan_custom">Custom</h4>
+        <p class="price" data-i18n="plan_custom_price">₩15,500 ~ /월</p>
+        <ul id="plan_custom_list"></ul>
+        <button class="btn primary buy" data-i18n="plan_buy">구매</button>
+      </div>
+    </div>
+    <div class="pricing-cta-text">
+      <a href="#demo" class="text-cta" data-i18n="pricing_try_text">제품을 미리 경험해보세요.</a>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq" class="container faq">
+    <h2 class="section-title" data-i18n="faq_title">Frequently Asked Questions (FAQ)</h2>
+    <div class="items" id="faqList"></div>
+  </section>
+
+  <!-- CONTACT (anchor target) -->
+  <div id="contact" style="height:1px"></div>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="container foot">
+      <h3>Capsule Your Sensitive Private Info</h3>
+      <p><strong>Email</strong> : <a href="mailto:contact@cubig.ai" style="color:#a8c2ff">contact@cubig.ai</a></p>
+      <p>Business Registration Number : 133-81-45679</p>
+      <p>E-Commerce Registration : 2023-Seoul-Seocho-2822</p>
+      <p>4F, NAVER 1784, 95, Jeongjail-ro, Bundang-gu, Seongnam-si, Gyeonggi-do, Republic of Korea</p>
+      <small>© <span id="y"></span> Cubig. All rights reserved.</small>
+    </div>
+  </footer>
+
+  <script>
+    // ---------- Year
+    document.getElementById('y').textContent = new Date().getFullYear();
+
+    // ---------- Slider (2 slides, 5s + progress gauge)
+    const SLIDE_MS = 5000; // 요청사항: 5초
+    const slides = document.getElementById('slides');
+    const slider = document.getElementById('slider');
+    const dots = document.querySelectorAll('.dot');
+    const gbar = document.getElementById('gbar');
+    let idx = 0, timerId = null;
+
+    const switchTo = (i)=>{
+      idx = i;
+      slides.style.transform = `translateX(-${i*100}%)`;
+      dots.forEach((d,j)=>d.classList.toggle('active', j===i));
+      resetGauge();
+      startCycle();
+    };
+
+    const resetGauge = ()=>{
+      gbar.classList.remove('animate');
+      // 강제 reflow로 애니메이션 리셋
+      void gbar.offsetWidth;
+      gbar.style.setProperty('--dur', (SLIDE_MS/1000)+'s');
+      gbar.style.animationPlayState = 'running';
+      gbar.classList.add('animate');
+    };
+
+    const startCycle = ()=>{
+      stopCycle();
+      timerId = setTimeout(()=> {
+        switchTo((idx+1)%2);
+      }, SLIDE_MS);
+    };
+
+    const stopCycle = ()=>{
+      if (timerId){ clearTimeout(timerId); timerId = null; }
+      gbar.style.animationPlayState = 'paused';
+    };
+
+    // 초기 시작
+    resetGauge(); startCycle();
+
+    // Hover 시 일시정지/재시작 (재시작 시 새 5초로 시작)
+    slider.addEventListener('mouseenter', stopCycle);
+    slider.addEventListener('mouseleave', ()=>{ resetGauge(); startCycle(); });
+
+    // Dots 클릭
+    dots.forEach((d,i)=>d.addEventListener('click', ()=>switchTo(i)));
+
+    // ---------- Scroll spy
+    const spyLinks = [...document.querySelectorAll('[data-spy]')];
+    const observer = new IntersectionObserver((ents)=>{
+      ents.forEach(ent=>{
+        const id = ent.target.getAttribute('id');
+        if(ent.isIntersecting){
+          spyLinks.forEach(a=>{
+            const href = a.getAttribute('href').slice(1);
+            a.classList.toggle('active', href===id);
+          });
+        }
+      });
+    }, {rootMargin:"-40% 0px -50% 0px", threshold:.01});
+    ['positioning','demo','certs','pricing','faq'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el) observer.observe(el);
+    });
+
+    // ---------- Simple actions
+    document.getElementById('loginBtn').onclick=()=>alert('로그인 페이지 연동 예정입니다.');
+    document.getElementById('contactBtn').onclick=()=>location.href='mailto:contact@cubig.ai';
+    document.getElementById('brochureBtn').onclick=(e)=>{ e.preventDefault(); alert('제품소개서 링크를 연결해 주세요. (예: /files/Brochure_LLM.pdf)'); };
+
+    // ---------- FAQ data (both languages)
+    const faqData = {
+      en: [
+        ["What features does LLM Capsule provide?","Context-aware detection, multi-mode de-identification, admin policy controls, on-prem deployment, and public LLM routing."],
+        ["What types of personal data can it detect?","Broad PII including names, contacts, IDs, finance/health tags; extendable by policy."],
+        ["Can industry-specific filters be customized and extended?","Yes. Policies and dictionaries can be tuned per industry and org unit."],
+        ["Is integration with existing systems supported?","Yes. E-Approval, Work Portal, DB, and file systems via connectors/APIs."],
+        ["Does it handle large documents at speed?","Built for enterprise scale with batch processing and caching."],
+        ["Can it process unstructured notes or call-center records?","Yes, free-form text streams are supported."],
+        ["Is it easy for non-experts to use?","Admin presets + guided flows keep UX simple for end users."]
+      ],
+      ko: [
+        ["LLM Capsule은 어떤 기능을 제공하나요?","문맥기반 탐지, 다중 비식별화, 관리자 정책 통제, 온프레미스 배포, 퍼블릭 LLM 라우팅 등입니다."],
+        ["탐지 가능한 개인정보 유형은?","이름/연락처/식별번호/금융·의료 등 광범위 PII를 지원하며 정책으로 확장 가능합니다."],
+        ["산업별 맞춤형 필터 확장이 가능한가요?","가능합니다. 업종/조직별 용어·정책을 세밀하게 조정할 수 있습니다."],
+        ["기존 시스템 연동은 지원하나요?","전자결재, 업무포털, DB, 파일시스템 등 커넥터/API로 연동됩니다."],
+        ["대용량 문서와 속도는 문제없나요?","엔터프라이즈 규모의 배치 처리와 캐싱 구조를 갖췄습니다."],
+        ["비정형 텍스트도 처리하나요?","가능합니다. 자유 메모나 상담 기록 형태의 텍스트도 지원합니다."],
+        ["비전문가도 쉽게 사용할 수 있나요?","관리자 프리셋과 가이드 플로우로 누구나 쉽게 사용할 수 있습니다."]
+      ]
+    };
+    const faqList = document.getElementById('faqList');
+
+    // ---------- i18n dictionary (추가: 요금제 텍스트/리스트/가격/구매)
+    const i18n = {
+      en:{
+        nav_login:"Login", nav_contact:"Contact",
+
+        hero1_title:"The Essential Security Capsule<br>for AI Services",
+        hero1_sub:"The essential security layer for AI services and agents—from government compliance and data protection to trusted, scalable operations that build user confidence.",
+        hero2_title:"Capsule AI for What’s Next<br>Secure, Seamless for GenAI and Public LLMs",
+        hero2_sub:"LLM Capsule bridges enterprises and AI platforms securely and seamlessly, empowering innovation with trusted data protection and compliance.",
+        cta_contact:"Contact Us", cta_start:"Get Started", cta_brochure:"Download Brochure",
+
+        pos_title:"You Choose How AI Works for You",
+        pos_sub:"Because AI for business should always be safe.",
+        pos1_title:"You Choose How AI Works for You",
+        pos1_sub:"Because AI for business should always be safe.",
+        pos1_list:[
+          "Complete Protection of Sensitive Data in AI Usage — A four-step framework of detection, protection, utilization, and recovery.",
+          "Customizable Data Protection — Tailored to corporate policies and environments.",
+          "Flexible De-identification Methods — Optimized protection strategies for every situation."
+        ],
+        pos1_cta:"Learn more",
+
+        pos2_title:"AI that works at enterprise scale",
+        pos2_sub:"Smarter AI, valuable data — built for enterprise scale.",
+        pos2_list:[
+          "Seamless Public LLM Integration — ChatGPT, Claude, Gemini—your choice, with efficiency and security.",
+          "Large-Scale Document Processing & Ontology Management — Turn enterprise data into structured, valuable assets.",
+          "RAG & Graph RAG Support — Use real-time data and knowledge graphs for accurate, trusted answers."
+        ],
+
+        pos3_title:"Compliance Ready, Threat Resilient",
+        pos3_sub:"Enterprise-grade AI security and management for safe, compliant, and reliable operations.",
+        pos3_list:[
+          "Context-Aware AI Detection — Beyond keywords, precision for enterprise data protection.",
+          "Defense Against Prompt Injection & Jailbreak Attacks — Safeguards for stable AI operations.",
+          "Compliance with Global Security Standards — Meets domestic/international regulations.",
+          "Admin-Centric User Management — Simplified administration at scale.",
+          "On-Premises Deployment Support — Secure operations on dedicated infrastructure."
+        ],
+
+        demo_title:"Try our Web Demo",
+        demo_sub:"Experience the full journey — from context detection to LLM utilization to data recovery.",
+
+        certs_title:"Why We’re Different",
+        certs_desc:"Precise detection and efficient use that keep response quality intact after sensitive data is safeguarded.",
+        certs_s1:"Type I Error Detection Accuracy",
+        certs_s2:"Type II Error Detection Accuracy",
+        certs_s3:"Structured Personal Data Protection",
+        certs_s4:"Response Similarity with Public LLMs",
+
+        pricing_title:"Plans",
+        pricing_desc:"Flexible on-premises pricing tailored to your organization’s scale and security requirements.",
+        plan_basic:"Basic",
+        plan_basic_price:"₩10,500 ~ /mo",
+        plan_basic_list:[
+          "Context-aware detection",
+          "Safe de-identification",
+          "Public LLM integration",
+          "Convenient data recovery",
+          "Email support"
+        ],
+        plan_custom:"Custom",
+        plan_custom_price:"₩15,500 ~ /mo",
+        plan_custom_list:[
+          "100+ seats plan",
+          "Includes Personal features",
+          "Add-on options available:"
+        ],
+        plan_custom_addons:[
+          "Add structured sensitive keywords",
+          "Central admin console",
+          "Unstructured sensitive-info module",
+          "RAG capability",
+          "Access control by document security level",
+          "Context-aware AI search"
+        ],
+        plan_buy:"Buy",
+        pricing_try_text:"Try the product first.",
+
+        faq_title:"Frequently Asked Questions (FAQ)"
+      },
+      ko:{
+        nav_login:"로그인", nav_contact:"문의하기",
+
+        hero1_title:"The Essential Security Capsule<br>for AI Services",
+        hero1_sub:"AI 서비스와 에이전트를 위한 필수 보안 레이어, 정부 가이드 준수부터 데이터 보호·신뢰 확보까지, 확장 가능한 보안으로 사용자 신뢰를 만듭니다.",
+        hero2_title:"Capsule AI for What’s Next<br>생성형 AI와 Public LLM 활용을 더 안전하고 자유롭게",
+        hero2_sub:"AI와 데이터가 만들어내는 가능성을 안전하게 확장해, 기업의 미래를 향한 자신감 있는 도약을 지원합니다",
+        cta_contact:"문의하기", cta_start:"시작하기", cta_brochure:"제품소개서 다운로드",
+
+        pos_title:"AI, 당신의 방식대로 더 안전하게",
+        pos_sub:"비즈니스 AI 플랫폼 사용은 무엇보다 안전해야 하니까.",
+        pos1_title:"AI, 당신의 방식대로 더 안전하게",
+        pos1_sub:"비즈니스 AI 플랫폼 사용은 무엇보다 안전해야 하니까.",
+        pos1_list:[
+          "AI 사용 시, 민감 데이터 완벽 보호 체계 — 자동 탐지–보호–활용–복원",
+          "데이터 보호 맞춤 설정 — 기업 정책과 환경에 최적화",
+          "비식별화 방식 선택 가능 — 상황별 최적 보호 전략"
+        ],
+        pos1_cta:"자세히 알아보기",
+
+        pos2_title:"비즈니스 성장을 이끄는 AI와 데이터 활용",
+        pos2_sub:"더 똑똑한 AI, 더 가치 있는 데이터가 만드는 엔터프라이즈 경험",
+        pos2_list:[
+          "다양한 Public LLM 연동 — 선택의 자유·효율·보안",
+          "대규모 문서 처리 & 온톨로지 관리 — 데이터 자산화",
+          "RAG & Graph RAG 지원 — 최신 정보+지식 구조로 정확도 향상"
+        ],
+
+        pos3_title:"위협에 강한 AI, 규제를 충족하는 보안",
+        pos3_sub:"엔터프라이즈 운영을 지키는 신뢰할 수 있는 AI 보안·관리",
+        pos3_list:[
+          "문맥 기반 AI 탐지",
+          "프롬프트 인젝션·Jailbreak 방어",
+          "국내외 보안 규제 충족",
+          "Admin 중심 사용자 관리",
+          "온프레미스 배포 지원"
+        ],
+
+        demo_title:"Try our Web Demo",
+        demo_sub:"민감정보 문맥 탐지, 데이터 비식별화로 LLM 활용, 데이터 복원 과정을 경험해보세요.",
+
+        certs_title:"한 차원 높은 데이터 보호와 활용",
+        certs_desc:"데이터 오류는 정확히 탐지하고, 정상 데이터는 보호해 효율성과 품질을 유지합니다.",
+        certs_s1:"1종 오류 탐지 정확도",
+        certs_s2:"2종 오류 탐지 정확도",
+        certs_s3:"정형화된 개인정보 보호 체계",
+        certs_s4:"Public LLM 기반 답변 유사도",
+
+        pricing_title:"요금제",
+        pricing_desc:"조직의 규모와 보안 수준에 맞춰, 최적의 온프레미스 요금제를 제공합니다.",
+        plan_basic:"Basic",
+        plan_basic_price:"₩10,500 ~ /월",
+        plan_basic_list:[
+          "문맥 기반 탐지",
+          "안전한 정보 비식별화",
+          "Public LLM 연동",
+          "편리한 정보 복원",
+          "이메일 지원"
+        ],
+        plan_custom:"Custom",
+        plan_custom_price:"₩15,500 ~ /월",
+        plan_custom_list:[
+          "100인 이상 요금제",
+          "Personal 기능 포함",
+          "Add-on 추가 가능:"
+        ],
+        plan_custom_addons:[
+          "정형 민감 키워드 추가",
+          "중앙 관리자 콘솔 구축",
+          "비정형 민감정보 조건 모듈",
+          "RAG 기능",
+          "문서 보안 등급별 접근 제어",
+          "문맥 기반 AI 탐색 적용"
+        ],
+        plan_buy:"구매",
+        pricing_try_text:"제품을 미리 경험해보세요.",
+
+        faq_title:"자주 묻는 질문"
+      }
+    };
+
+    // ---------- Renderers
+    const faqListEl = document.getElementById('faqList');
+    const applyFaq = (items)=>{
+      faqListEl.innerHTML = items.map(([q,a])=>(
+        `<details><summary>${q}</summary><p>${a}</p></details>`
+      )).join('');
+    };
+
+    const renderPricing = (lang)=>{
+      // Basic list
+      const b = i18n[lang].plan_basic_list || [];
+      document.getElementById('plan_basic_list').innerHTML = b.map(x=>`<li>${x}</li>`).join('');
+
+      // Custom list + addons (중첩 리스트)
+      const c = i18n[lang].plan_custom_list || [];
+      const addons = i18n[lang].plan_custom_addons || [];
+      const html = c.map((x,ix)=>{
+        if (x.includes('Add-on')) {
+          return `<li>${x}<ul class="sub">${addons.map(a=>`<li>${a}</li>`).join('')}</ul></li>`;
+        }
+        return `<li>${x}</li>`;
+      }).join('');
+      document.getElementById('plan_custom_list').innerHTML = html;
+    };
+
+    // ---------- Apply language
+    let LANG = localStorage.getItem('LANG') || 'ko';
+    const applyLang = (lang)=>{
+      LANG = lang;
+      localStorage.setItem('LANG', lang);
+      document.getElementById('langBtn').textContent = (lang==='ko'?'KR':'EN')+' ▾';
+
+      // text nodes
+      document.querySelectorAll('[data-i18n]').forEach(el=>{
+        const k = el.getAttribute('data-i18n');
+        const t = i18n[lang][k];
+        if(typeof t === 'string') el.innerHTML = t;
+      });
+
+      // lists
+      const fillList=(id,key)=>{
+        const ul = document.getElementById(id);
+        const arr = i18n[lang][key];
+        if(Array.isArray(arr) && ul){
+          ul.innerHTML = arr.map(li=>`<li>${li}</li>`).join('');
+        }
+      };
+      fillList('pos1_list','pos1_list');
+      fillList('pos2_list','pos2_list');
+
+      const pos3 = i18n[lang]['pos3_list'];
+      if(Array.isArray(pos3)){
+        document.getElementById('pos3_list').innerHTML =
+          pos3.map(li=>`<li>${li}</li>`).join('');
+      }
+
+      // pricing
+      renderPricing(lang);
+
+      // FAQ
+      applyFaq(faqData[lang]);
+    };
+    applyLang(LANG);
+    document.getElementById('langBtn').addEventListener('click', ()=>{
+      applyLang(LANG==='ko'?'en':'ko');
+    });
+
+    // 구매 버튼 클릭
+    document.querySelectorAll('.buy').forEach(btn=>{
+      btn.addEventListener('click', ()=> alert((LANG==='ko'?'구매 플로우로 이동합니다.':'Proceed to purchase flow.')));
+    });
+  </script>
+</body>
+</html>
