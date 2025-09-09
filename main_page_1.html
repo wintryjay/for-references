@@ -324,7 +324,7 @@
       </div>
     </div>
     <div class="pricing-cta-text">
-      <a href="#demo" class="text-cta" data-i18n="pricing_try_text">제품을 미리 경험해보세요.</a>
+      <a href="#plan_Calculator_1" class="text-cta" data-i18n="pricing_try_text">제품을 미리 경험해보세요.</a>
     </div>
   </section>
 
@@ -676,9 +676,13 @@
     });
 
     // 구매 버튼 클릭
-    document.querySelectorAll('.buy').forEach(btn=>{
-      btn.addEventListener('click', ()=> alert((LANG==='ko'?'구매 플로우로 이동합니다.':'Proceed to purchase flow.')));
+  document.querySelectorAll('.buy').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
+      window.location.href = 'plan_Calculator_1.html';
     });
+  });
+
   </script>
 </body>
 </html>
